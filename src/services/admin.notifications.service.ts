@@ -13,6 +13,16 @@ export const AdminNotificationsService = {
   },
 
   /* ============================
+     UNREAD COUNT
+  ============================ */
+  async unreadCount() {
+    const { data } = await api.get(
+      "/admin/notifications/unread-count"
+    )
+    return data
+  },
+
+  /* ============================
      CREATE (user específico)
   ============================ */
   async create(
@@ -29,7 +39,6 @@ export const AdminNotificationsService = {
     })
     return data
   },
-  
 
   /* ============================
      BROADCAST
@@ -42,6 +51,26 @@ export const AdminNotificationsService = {
     const { data } = await api.post(
       "/admin/notifications/broadcast",
       { title, message, type }
+    )
+    return data
+  },
+
+  /* ============================
+     MARK ONE AS READ
+  ============================ */
+  async markAsRead(id: number) {
+    const { data } = await api.patch(
+      `/admin/notifications/${id}/read`
+    )
+    return data
+  },
+
+  /* ============================
+     MARK ALL AS READ
+  ============================ */
+  async markAllAsRead() {
+    const { data } = await api.patch(
+      "/admin/notifications/read-all"
     )
     return data
   },
