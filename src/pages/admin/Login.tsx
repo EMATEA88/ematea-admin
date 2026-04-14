@@ -34,10 +34,10 @@ export default function AdminLogin() {
     try {
       setLoading(true)
 
-      const normalizedPhone = normalizePhone(phone)
+      const identifier = normalizePhone(phone)
 
       const { data } = await api.post("/auth/login", {
-        phone: normalizedPhone,
+        identifier, // ✅ CORRETO
         password,
       })
 
@@ -54,7 +54,7 @@ export default function AdminLogin() {
 
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.error ||
+        err?.response?.data?.message || // 🔥 ajuste aqui também
         "Credenciais inválidas"
       )
     } finally {
