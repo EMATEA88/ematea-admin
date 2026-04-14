@@ -5,26 +5,22 @@ import toast from "react-hot-toast"
 import { ShieldCheck } from "lucide-react"
 
 export default function AdminLogin() {
-
   const navigate = useNavigate()
 
-  const [phone, setPhone] = useState("")
+  const [inputIdentifier, setInputIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
+  // Função para normalizar apenas se for telefone numérico
   function normalizePhone(value: string) {
     if (!value) return value
-
     let numbers = value.replace(/\D/g, "")
-
     if (numbers.startsWith("244")) {
       numbers = numbers.slice(3)
     }
-
     if (numbers.startsWith("0")) {
       numbers = numbers.slice(1)
     }
-
     return `+244${numbers}`
   }
 
@@ -34,28 +30,34 @@ export default function AdminLogin() {
     try {
       setLoading(true)
 
-      const identifier = normalizePhone(phone)
+      // ✅ ALINHAMENTO AO BACKEND:
+      // Se tiver '@', tratamos como e-mail. Se não, tratamos como telefone.
+      const isEmail = inputIdentifier.includes("@")
+      const identifier = isEmail 
+        ? inputIdentifier.toLowerCase().trim() 
+        : normalizePhone(inputIdentifier)
 
       const { data } = await api.post("/auth/login", {
-        identifier, // ✅ CORRETO
+        identifier, 
         password,
       })
 
+      // Verifica se o usuário logado tem permissão de Admin
       if (data.user.role !== "ADMIN") {
         toast.error("Acesso restrito a administradores")
         return
       }
 
+      // Salva as credenciais para as rotas protegidas
       localStorage.setItem("token", data.token)
       localStorage.setItem("role", data.user.role)
 
-      toast.success("Login efetuado com sucesso")
+      toast.success("Bem-vindo ao Painel EMATEA")
       navigate("/admin")
 
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || // 🔥 ajuste aqui também
-        "Credenciais inválidas"
+        err?.response?.data?.message || "Credenciais inválidas ou erro de conexão"
       )
     } finally {
       setLoading(false)
@@ -64,13 +66,10 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950">
-
       <div className="w-full max-w-md">
-
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl p-8 backdrop-blur">
-
+          
           <div className="flex flex-col items-center mb-8">
-
             <div className="bg-amber-500/10 p-4 rounded-full mb-4">
               <ShieldCheck className="text-amber-400 w-8 h-8" />
             </div>
@@ -80,24 +79,22 @@ export default function AdminLogin() {
             </h1>
 
             <p className="text-neutral-400 text-sm mt-2">
-              Acesso restrito e monitorizado
+              Acesso restrito EMATEA FINTECH
             </p>
-
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
-
             <div>
               <label className="text-sm text-neutral-400">
-                Telefone
+                E-mail ou Telefone
               </label>
 
               <input
                 type="text"
-                placeholder="+2449XXXXXXXX"
+                placeholder="Ex: ematea@gmail.com ou 941..."
                 className="w-full bg-neutral-800 border border-neutral-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white rounded-xl px-4 py-3 mt-2 outline-none transition"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={inputIdentifier}
+                onChange={(e) => setInputIdentifier(e.target.value)}
                 required
               />
             </div>
@@ -122,17 +119,14 @@ export default function AdminLogin() {
               disabled={loading}
               className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-semibold py-3 rounded-xl transition"
             >
-              {loading ? "Autenticando..." : "Entrar"}
+              {loading ? "A processar..." : "Entrar no Sistema"}
             </button>
-
           </form>
-
         </div>
 
         <p className="text-center text-neutral-600 text-xs mt-6">
-          © {new Date().getFullYear()} EMATEA FINTECH
+          © {new Date().getFullYear()} EMATEA – Comércio e Prestação de Serviços
         </p>
-
       </div>
     </div>
   )
