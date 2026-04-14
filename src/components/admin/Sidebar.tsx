@@ -100,6 +100,8 @@ export default function Sidebar() {
           Service Requests
         </SidebarLink>
 
+        <div className={sectionTitle}>Kixikila</div>
+
         <SidebarLink to="/admin/kyc" icon={<ShieldCheck size={18} />}>
           KYC Verification
         </SidebarLink>
@@ -111,6 +113,15 @@ export default function Sidebar() {
         <SidebarLink to="/admin/partners">
           Partners
         </SidebarLink>
+
+        {/* KIXIKILA */}
+
+        <SidebarLink
+to="/admin/kixikila"
+  icon={<Users size={18} />}
+>
+  Kixikila Admin
+</SidebarLink>
 
         {/* OTC */}
         <div className={sectionTitle}>OTC</div>

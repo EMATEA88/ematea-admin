@@ -30,6 +30,8 @@ import AdminPartners from "./pages/admin/AdminPartners"
 import AdminKYCPage from "./pages/admin/kyc/AdminKYCPage"
 import OtcOrdemDetalhe from "./pages/admin/OtcOrdemDetalhe"
 import AdminApplications from "./pages/admin/AdminApplications"
+import AdminKixikila from "./pages/admin/AdminKixikila"
+import AdminDashboard from './pages/AdminDashboard'
 import AdminLogin from "./pages/admin/Login"
 
 export default function App() {
@@ -87,6 +89,8 @@ export default function App() {
           <Route path="partners" element={<AdminPartners />} />
           <Route path="support" element={<SupportChat />} />
           <Route path="kyc" element={<AdminKYCPage />} />
+          <Route path="/admin/kixikila" element={<AdminKixikila />} />
+          <Route path="/admin/tasks" element={<AdminDashboard />} />
 
           {/* INVESTMENTS */}
           <Route path="applications" element={<AdminApplications />} />

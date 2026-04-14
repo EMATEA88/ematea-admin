@@ -8,31 +8,19 @@ export default function AdminLogin() {
 
   const navigate = useNavigate()
 
-  const [identifier, setIdentifier] = useState("")
+  const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
-  function normalizeIdentifier(value: string) {
+  function normalizePhone(value: string) {
     if (!value) return value
 
-    const trimmed = value.trim()
+    let numbers = value.replace(/\D/g, "")
 
-    // EMAIL
-    if (trimmed.includes("@")) {
-      return trimmed
-        .replace(/\s+/g, "")
-        .toLowerCase()
-    }
-
-    // TELEFONE
-    let numbers = trimmed.replace(/\D/g, "")
-
-    // remove indicativo duplicado
     if (numbers.startsWith("244")) {
       numbers = numbers.slice(3)
     }
 
-    // remove zeros iniciais
     if (numbers.startsWith("0")) {
       numbers = numbers.slice(1)
     }
@@ -46,10 +34,10 @@ export default function AdminLogin() {
     try {
       setLoading(true)
 
-      const loginIdentifier = normalizeIdentifier(identifier)
+      const normalizedPhone = normalizePhone(phone)
 
       const { data } = await api.post("/auth/login", {
-        identifier: loginIdentifier,
+        phone: normalizedPhone,
         password,
       })
 
@@ -65,12 +53,10 @@ export default function AdminLogin() {
       navigate("/admin")
 
     } catch (err: any) {
-
       toast.error(
         err?.response?.data?.error ||
         "Credenciais inválidas"
       )
-
     } finally {
       setLoading(false)
     }
@@ -103,15 +89,15 @@ export default function AdminLogin() {
 
             <div>
               <label className="text-sm text-neutral-400">
-                Email ou Telefone
+                Telefone
               </label>
 
               <input
                 type="text"
-                placeholder="+2449XXXXXXXX ou email@dominio.com"
+                placeholder="+2449XXXXXXXX"
                 className="w-full bg-neutral-800 border border-neutral-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white rounded-xl px-4 py-3 mt-2 outline-none transition"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 required
               />
             </div>

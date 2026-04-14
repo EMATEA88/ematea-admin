@@ -11,11 +11,16 @@ interface Recharge {
   }
 }
 
+type ProcessingState = {
+  id: number
+  action: 'approve' | 'reject'
+} | null
+
 export default function Recharges() {
 
   const [items, setItems] = useState<Recharge[]>([])
   const [loading, setLoading] = useState(true)
-  const [processingId, setProcessingId] = useState<number | null>(null)
+  const [processing, setProcessing] = useState<ProcessingState>(null)
 
   useEffect(() => {
     load()
@@ -41,11 +46,13 @@ export default function Recharges() {
   }
 
   async function approve(id: number) {
-    if (processingId) return
+    if (processing) return
 
     try {
-      setProcessingId(id)
+      setProcessing({ id, action: 'approve' })
+
       await AdminService.approveRecharge(id)
+
       toast.success('Recarga aprovada')
 
       setItems(prev =>
@@ -59,16 +66,18 @@ export default function Recharges() {
     } catch (err: any) {
       toast.error(err?.response?.data?.error || 'Erro ao aprovar')
     } finally {
-      setProcessingId(null)
+      setProcessing(null)
     }
   }
 
   async function reject(id: number) {
-    if (processingId) return
+    if (processing) return
 
     try {
-      setProcessingId(id)
+      setProcessing({ id, action: 'reject' })
+
       await AdminService.rejectRecharge(id)
+
       toast.success('Recarga rejeitada')
 
       setItems(prev =>
@@ -82,7 +91,7 @@ export default function Recharges() {
     } catch (err: any) {
       toast.error(err?.response?.data?.error || 'Erro ao rejeitar')
     } finally {
-      setProcessingId(null)
+      setProcessing(null)
     }
   }
 
@@ -135,7 +144,11 @@ export default function Recharges() {
 
             {items.map((r) => {
 
-              const isProcessing = processingId === r.id
+              const isApproving =
+                processing?.id === r.id && processing.action === 'approve'
+
+              const isRejecting =
+                processing?.id === r.id && processing.action === 'reject'
 
               return (
                 <tr
@@ -168,7 +181,7 @@ export default function Recharges() {
                     {r.status === 'PENDING' && (
                       <>
                         <button
-                          disabled={isProcessing}
+                          disabled={!!processing}
                           onClick={() => approve(r.id)}
                           className="
                             bg-emerald-600
@@ -181,11 +194,11 @@ export default function Recharges() {
                             transition
                           "
                         >
-                          {isProcessing ? 'Processando...' : 'Aprovar'}
+                          {isApproving ? 'Processando...' : 'Aprovar'}
                         </button>
 
                         <button
-                          disabled={isProcessing}
+                          disabled={!!processing}
                           onClick={() => reject(r.id)}
                           className="
                             bg-red-600
@@ -198,7 +211,7 @@ export default function Recharges() {
                             transition
                           "
                         >
-                          {isProcessing ? 'Processando...' : 'Rejeitar'}
+                          {isRejecting ? 'Processando...' : 'Rejeitar'}
                         </button>
                       </>
                     )}
