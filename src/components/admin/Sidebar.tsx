@@ -100,6 +100,10 @@ export default function Sidebar() {
           Service Requests
         </SidebarLink>
 
+        <SidebarLink to="/admin/task-manager">
+          Gestão de Tarefas
+        </SidebarLink>
+
         {/* KIXIKILA */}
         <div className={sectionTitle}>Kixikila</div>
 
@@ -130,6 +134,10 @@ export default function Sidebar() {
           Kixikila Admin
         </SidebarLink>
 
+        <SidebarLink to="/admin/gift" icon={<Gift size={18} />}>
+          Gift
+        </SidebarLink>
+
         {/* OTC */}
         <div className={sectionTitle}>OTC</div>
 
@@ -156,14 +164,6 @@ export default function Sidebar() {
         <SidebarLink to="/admin/otc/price-history" icon={<LineChart size={18} />}>
           Histórico Preços
         </SidebarLink>
-
-        {/* OUTROS */}
-        <div className={sectionTitle}>Outros</div>
-
-        <SidebarLink to="/admin/gift" icon={<Gift size={18} />}>
-          Gift
-        </SidebarLink>
-
       </nav>
     </aside>
   )
