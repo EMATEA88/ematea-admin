@@ -25,7 +25,7 @@ const linkBase =
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 h-screen bg-[#0B0E11] border-r border-[#1E2329] flex flex-col">
+    <aside className="w-64 h-full bg-[#0B0E11] border-r border-[#1E2329] flex flex-col">
 
       {/* LOGO FIXO */}
       <div className="h-16 flex items-center px-6 text-lg font-semibold border-b border-[#1E2329] tracking-wide flex-shrink-0">
@@ -33,7 +33,7 @@ export default function Sidebar() {
       </div>
 
       {/* NAV COM SCROLL REAL */}
-      <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-[#1E2329]">
+      <nav className="flex-1 overflow-y-auto py-4 pr-2 scrollbar-thin scrollbar-thumb-[#2B3139] hover:scrollbar-thumb-[#3A4149]">
 
         {/* CORE */}
         <div className={sectionTitle}>Core</div>
@@ -100,6 +100,7 @@ export default function Sidebar() {
           Service Requests
         </SidebarLink>
 
+        {/* KIXIKILA */}
         <div className={sectionTitle}>Kixikila</div>
 
         <SidebarLink to="/admin/kyc" icon={<ShieldCheck size={18} />}>
@@ -114,14 +115,20 @@ export default function Sidebar() {
           Partners
         </SidebarLink>
 
-        {/* KIXIKILA */}
+        {/* ADMIN */}
+        <div className={sectionTitle}>Admin</div>
 
-        <SidebarLink
-to="/admin/kixikila"
-  icon={<Users size={18} />}
->
-  Kixikila Admin
-</SidebarLink>
+        <SidebarLink to="/admin/tasks" icon={<FileText size={18} />}>
+          Tarefas
+        </SidebarLink>
+
+        <SidebarLink to="/admin/stats" icon={<BarChart3 size={18} />}>
+          Estatísticas
+        </SidebarLink>
+
+        <SidebarLink to="/admin/kixikila" icon={<Users size={18} />}>
+          Kixikila Admin
+        </SidebarLink>
 
         {/* OTC */}
         <div className={sectionTitle}>OTC</div>
@@ -162,7 +169,7 @@ to="/admin/kixikila"
   )
 }
 
-/* ================= LINK PROFISSIONAL ================= */
+/* ================= LINK ================= */
 
 function SidebarLink({ to, icon, children }: any) {
   return (
