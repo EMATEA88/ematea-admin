@@ -26,9 +26,10 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // 🔥 CREATE TASK
+  // MODAL
   const [showCreate, setShowCreate] = useState(false)
 
+  // FORM
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -36,6 +37,9 @@ export default function AdminDashboard() {
     url: '',
     minSeconds: '10'
   })
+
+  // IMAGE STATE
+  const [image, setImage] = useState<string | null>(null)
 
   useEffect(() => {
     loadData()
@@ -62,7 +66,6 @@ export default function AdminDashboard() {
 
     try {
       await adminService.reviewTask(id, action)
-      alert('Sucesso!')
       loadData()
     } catch (err: any) {
       alert(err.message || 'Erro ao processar ação')
@@ -71,10 +74,16 @@ export default function AdminDashboard() {
 
   async function createTask() {
     try {
-      await adminService.createTask(form)
+      if (!form.title || !form.description || !form.reward) {
+        return alert('Preencha todos os campos obrigatórios')
+      }
 
-      alert('Tarefa criada com sucesso!')
+      await adminService.createTask({
+        ...form,
+        imageUrl: image // 🔥 envio da imagem
+      })
 
+      // RESET
       setForm({
         title: '',
         description: '',
@@ -82,6 +91,7 @@ export default function AdminDashboard() {
         url: '',
         minSeconds: '10'
       })
+      setImage(null)
 
       setShowCreate(false)
       loadData()
@@ -106,7 +116,7 @@ export default function AdminDashboard() {
 
         <button
           onClick={() => setShowCreate(true)}
-          className="bg-[#02C076] px-4 py-2 rounded font-bold"
+          className="bg-[#02C076] px-4 py-2 rounded font-bold hover:opacity-90"
         >
           + Nova Tarefa
         </button>
@@ -125,7 +135,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="bg-[#1E2329] p-4 rounded-xl border border-[#2B3139]">
-          <p className="text-gray-400 text-sm">Conclusões com Sucesso</p>
+          <p className="text-gray-400 text-sm">Conclusões</p>
           <p className="text-2xl font-bold text-green-400">{stats?.totalCompleted ?? 0}</p>
         </div>
       </div>
@@ -136,14 +146,11 @@ export default function AdminDashboard() {
       </h2>
 
       <div className="space-y-4">
-
-        {/* EMPTY STATE */}
         {pending.length === 0 && (
           <div className="bg-[#1E2329] border border-[#2B3139] p-6 rounded-xl text-center">
             <p className="text-gray-400 mb-4">
-              Nenhuma tarefa pendente no momento
+              Nenhuma tarefa pendente
             </p>
-
             <button
               onClick={() => setShowCreate(true)}
               className="bg-[#FCD535] text-black px-4 py-2 rounded font-bold"
@@ -153,60 +160,44 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* LISTA NORMAL */}
         {pending.map((item) => (
-          <div
-            key={item.id}
-            className="bg-[#1E2329] border border-[#2B3139] p-6 rounded-2xl flex flex-col md:flex-row gap-6"
-          >
+          <div key={item.id} className="bg-[#1E2329] p-6 rounded-2xl flex flex-col md:flex-row gap-6">
 
-            {/* PROVA */}
             <div className="md:w-1/3">
-              <p className="text-xs text-gray-500 mb-2 font-bold uppercase">
-                Prova:
-              </p>
-
               {item.proofType === 'IMAGE' ? (
                 <img
                   src={item.proof}
-                  alt="Prova"
-                  className="w-full h-48 object-cover rounded-xl border border-[#2B3139] cursor-pointer"
-                  onClick={() => window.open(item.proof, '_blank')}
+                  className="w-full h-48 object-cover rounded cursor-pointer"
+                  onClick={() => window.open(item.proof)}
                 />
               ) : (
-                <a
-                  href={item.proof}
-                  target="_blank"
-                  className="text-blue-400 underline break-all"
-                >
+                <a href={item.proof} target="_blank" className="text-blue-400 underline">
                   {item.proof}
                 </a>
               )}
             </div>
 
-            {/* INFO */}
             <div className="flex-1">
-              <h3 className="text-lg font-bold">{item.task.title}</h3>
-
-              <p className="text-sm text-gray-400 mb-2">
-                Usuário: <b>{item.user.email || item.user.phone}</b>
+              <h3 className="font-bold">{item.task.title}</h3>
+              <p className="text-sm text-gray-400">
+                {item.user.email || item.user.phone}
               </p>
 
-              <p className="text-[#FCD535] font-bold text-lg">
+              <p className="text-[#FCD535] font-bold mt-2">
                 {item.task.reward} Kz
               </p>
 
-              <div className="mt-4 flex gap-3">
+              <div className="flex gap-3 mt-4">
                 <button
                   onClick={() => handleReview(item.id, 'APPROVE')}
-                  className="bg-[#02C076] px-6 py-2 rounded-xl font-bold"
+                  className="bg-[#02C076] px-4 py-2 rounded"
                 >
                   Aprovar
                 </button>
 
                 <button
                   onClick={() => handleReview(item.id, 'REJECT')}
-                  className="bg-red-600 px-6 py-2 rounded-xl font-bold"
+                  className="bg-red-600 px-4 py-2 rounded"
                 >
                   Rejeitar
                 </button>
@@ -217,13 +208,13 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* MODAL CREATE */}
+      {/* MODAL */}
       {showCreate && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center">
 
           <div className="bg-[#1E2329] p-6 rounded-xl w-full max-w-md">
 
-            <h2 className="font-bold mb-4">Criar Nova Tarefa</h2>
+            <h2 className="mb-4 font-bold">Criar Nova Tarefa</h2>
 
             <input
               placeholder="Título"
@@ -257,26 +248,52 @@ export default function AdminDashboard() {
               placeholder="Tempo (segundos)"
               value={form.minSeconds}
               onChange={e => setForm({ ...form, minSeconds: e.target.value })}
-              className="w-full p-2 mb-4 bg-[#0B0E11]"
+              className="w-full p-2 mb-3 bg-[#0B0E11]"
             />
+
+            {/* IMAGE UPLOAD */}
+            <input
+              type="file"
+              accept="image/*"
+              className="mb-3"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+
+                const reader = new FileReader()
+                reader.onloadend = () => {
+                  setImage(reader.result as string)
+                }
+                reader.readAsDataURL(file)
+              }}
+            />
+
+            {/* PREVIEW */}
+            {image && (
+              <img
+                src={image}
+                className="w-full h-32 object-cover rounded mb-3"
+              />
+            )}
 
             <div className="flex gap-2">
               <button
                 onClick={createTask}
-                className="bg-[#FCD535] text-black px-4 py-2 rounded w-full"
+                className="bg-[#FCD535] text-black w-full py-2 rounded"
               >
                 Criar
               </button>
 
               <button
                 onClick={() => setShowCreate(false)}
-                className="bg-gray-600 px-4 py-2 rounded w-full"
+                className="bg-gray-600 w-full py-2 rounded"
               >
                 Cancelar
               </button>
             </div>
 
           </div>
+
         </div>
       )}
 

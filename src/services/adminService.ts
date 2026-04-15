@@ -17,20 +17,21 @@ export async function createTask(payload: {
   reward: string
   url?: string
   minSeconds: string
+  imageUrl?: string | null // 🔥 ADICIONADO
 }) {
 
   const body = {
     title: payload.title,
     description: payload.description,
 
-    // ✅ ADICIONAR
     instructions: payload.description,
 
-    // ✅ CONVERTER TIPOS
     reward: Number(payload.reward),
     minSeconds: Number(payload.minSeconds),
 
-    url: payload.url || null
+    url: payload.url || null,
+
+    imageUrl: payload.imageUrl || null // 🔥 ADICIONADO
   }
 
   const { data } = await api.post('/admin/tasks/create', body)
