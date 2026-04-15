@@ -40,6 +40,7 @@ export default function AdminDashboard() {
 
   // IMAGE STATE
   const [image, setImage] = useState<string | null>(null)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
 
   useEffect(() => {
     loadData()
@@ -164,18 +165,26 @@ export default function AdminDashboard() {
           <div key={item.id} className="bg-[#1E2329] p-6 rounded-2xl flex flex-col md:flex-row gap-6">
 
             <div className="md:w-1/3">
-              {item.proofType === 'IMAGE' ? (
-                <img
-                  src={item.proof}
-                  className="w-full h-48 object-cover rounded cursor-pointer"
-                  onClick={() => window.open(item.proof)}
-                />
-              ) : (
-                <a href={item.proof} target="_blank" className="text-blue-400 underline">
-                  {item.proof}
-                </a>
-              )}
-            </div>
+  {item.proofType === 'IMAGE' && item.proof ? (
+    <img
+      src={item.proof}
+      alt="Prova"
+      className="w-full h-48 object-cover rounded-xl border border-[#2B3139] cursor-pointer hover:opacity-80 transition"
+      onClick={() => setPreviewImage(item.proof)}
+    />
+  ) : item.proof ? (
+    <a
+      href={item.proof}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-400 underline break-all"
+    >
+      {item.proof}
+    </a>
+  ) : (
+    <p className="text-gray-500 italic">Sem prova enviada</p>
+  )}
+</div>
 
             <div className="flex-1">
               <h3 className="font-bold">{item.task.title}</h3>
@@ -229,7 +238,7 @@ export default function AdminDashboard() {
               onChange={e => setForm({ ...form, description: e.target.value })}
               className="w-full p-2 mb-2 bg-[#0B0E11]"
             />
-
+             
             <input
               placeholder="Recompensa"
               value={form.reward}
@@ -296,6 +305,18 @@ export default function AdminDashboard() {
 
         </div>
       )}
+
+      {previewImage && (
+  <div
+    className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+    onClick={() => setPreviewImage(null)}
+  >
+    <img
+      src={previewImage}
+      className="max-w-[90%] max-h-[90%] rounded-xl shadow-2xl"
+    />
+  </div>
+)}
 
     </div>
   )
