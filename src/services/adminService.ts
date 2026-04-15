@@ -18,7 +18,23 @@ export async function createTask(payload: {
   url?: string
   minSeconds: string
 }) {
-  const { data } = await api.post('/admin/tasks/create', payload)
+
+  const body = {
+    title: payload.title,
+    description: payload.description,
+
+    // ✅ ADICIONAR
+    instructions: payload.description,
+
+    // ✅ CONVERTER TIPOS
+    reward: Number(payload.reward),
+    minSeconds: Number(payload.minSeconds),
+
+    url: payload.url || null
+  }
+
+  const { data } = await api.post('/admin/tasks/create', body)
+
   return data
 }
 
