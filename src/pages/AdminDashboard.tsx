@@ -13,6 +13,8 @@ interface PendingTask {
   task: {
     title: string
     reward: number
+    totalLimit?: number
+    completed?: number
   }
 }
 
@@ -26,19 +28,17 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // MODAL
   const [showCreate, setShowCreate] = useState(false)
 
-  // FORM
   const [form, setForm] = useState({
     title: '',
     description: '',
     reward: '',
     url: '',
-    minSeconds: '10'
+    minSeconds: '10',
+    totalLimit: '' // 🔥 NOVO
   })
 
-  // IMAGE STATE
   const [image, setImage] = useState<string | null>(null)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
 
@@ -81,19 +81,19 @@ export default function AdminDashboard() {
 
       await adminService.createTask({
         ...form,
-        imageUrl: image // 🔥 envio da imagem
+        imageUrl: image
       })
 
-      // RESET
       setForm({
         title: '',
         description: '',
         reward: '',
         url: '',
-        minSeconds: '10'
+        minSeconds: '10',
+        totalLimit: ''
       })
-      setImage(null)
 
+      setImage(null)
       setShowCreate(false)
       loadData()
 
@@ -161,60 +161,94 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {pending.map((item) => (
-          <div key={item.id} className="bg-[#1E2329] p-6 rounded-2xl flex flex-col md:flex-row gap-6">
+        {pending.map((item) => {
 
-            <div className="md:w-1/3">
-  {item.proofType === 'IMAGE' && item.proof ? (
-    <img
-      src={item.proof}
-      alt="Prova"
-      className="w-full h-48 object-cover rounded-xl border border-[#2B3139] cursor-pointer hover:opacity-80 transition"
-      onClick={() => setPreviewImage(item.proof)}
-    />
-  ) : item.proof ? (
-    <a
-      href={item.proof}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-blue-400 underline break-all"
-    >
-      {item.proof}
-    </a>
-  ) : (
-    <p className="text-gray-500 italic">Sem prova enviada</p>
-  )}
-</div>
+          const completed = item.task.completed || 0
+          const total = item.task.totalLimit || 1
+          const percent = Math.min((completed / total) * 100, 100)
+          const remaining = Math.max(total - completed, 0)
 
-            <div className="flex-1">
-              <h3 className="font-bold">{item.task.title}</h3>
-              <p className="text-sm text-gray-400">
-                {item.user.email || item.user.phone}
-              </p>
+          return (
+            <div key={item.id} className="bg-[#1E2329] p-6 rounded-2xl flex flex-col md:flex-row gap-6">
 
-              <p className="text-[#FCD535] font-bold mt-2">
-                {item.task.reward} Kz
-              </p>
-
-              <div className="flex gap-3 mt-4">
-                <button
-                  onClick={() => handleReview(item.id, 'APPROVE')}
-                  className="bg-[#02C076] px-4 py-2 rounded"
-                >
-                  Aprovar
-                </button>
-
-                <button
-                  onClick={() => handleReview(item.id, 'REJECT')}
-                  className="bg-red-600 px-4 py-2 rounded"
-                >
-                  Rejeitar
-                </button>
+              <div className="md:w-1/3">
+                {item.proofType === 'IMAGE' && item.proof ? (
+                  <img
+                    src={item.proof}
+                    className="w-full h-48 object-cover rounded-xl cursor-pointer"
+                    onClick={() => setPreviewImage(item.proof)}
+                  />
+                ) : item.proof ? (
+                  <a href={item.proof} target="_blank" className="text-blue-400 underline">
+                    {item.proof}
+                  </a>
+                ) : (
+                  <p className="text-gray-500">Sem prova</p>
+                )}
               </div>
-            </div>
 
-          </div>
-        ))}
+              <div className="flex-1">
+                <h3 className="font-bold">{item.task.title}</h3>
+
+                <p className="text-sm text-gray-400">
+                  {item.user.email || item.user.phone}
+                </p>
+
+                <p className="text-[#FCD535] font-bold mt-2">
+                  {item.task.reward} Kz
+                </p>
+
+                {/* 🔥 PROGRESSO */}
+                {item.task.totalLimit && (
+                  <div className="mt-3">
+
+                    <div className="flex justify-between text-xs text-gray-400 mb-1">
+                      <span>{completed} / {total}</span>
+                      <span className="text-red-400 font-semibold">
+                        Restam {remaining}
+                      </span>
+                    </div>
+
+                    <div className="w-full h-2 bg-[#2B3139] rounded-full overflow-hidden">
+                      <div
+                        className={`
+                          h-2 rounded-full transition-all duration-700
+                          ${percent > 80 ? 'bg-red-500 animate-pulse' :
+                            percent > 50 ? 'bg-yellow-400' :
+                            'bg-[#02C076]'}
+                        `}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+
+                    {percent > 80 && (
+                      <p className="text-red-400 text-xs mt-1 animate-pulse">
+                        🔥 Últimas vagas
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => handleReview(item.id, 'APPROVE')}
+                    className="bg-[#02C076] px-4 py-2 rounded"
+                  >
+                    Aprovar
+                  </button>
+
+                  <button
+                    onClick={() => handleReview(item.id, 'REJECT')}
+                    className="bg-red-600 px-4 py-2 rounded"
+                  >
+                    Rejeitar
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          )
+        })}
       </div>
 
       {/* MODAL */}
@@ -225,98 +259,75 @@ export default function AdminDashboard() {
 
             <h2 className="mb-4 font-bold">Criar Nova Tarefa</h2>
 
-            <input
-              placeholder="Título"
+            <input placeholder="Título"
               value={form.title}
               onChange={e => setForm({ ...form, title: e.target.value })}
-              className="w-full p-2 mb-2 bg-[#0B0E11]"
-            />
+              className="w-full p-2 mb-2 bg-[#0B0E11]" />
 
-            <textarea
-              placeholder="Descrição"
+            <textarea placeholder="Descrição"
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
-              className="w-full p-2 mb-2 bg-[#0B0E11]"
-            />
-             
-            <input
-              placeholder="Recompensa"
+              className="w-full p-2 mb-2 bg-[#0B0E11]" />
+
+            <input placeholder="Recompensa"
               value={form.reward}
               onChange={e => setForm({ ...form, reward: e.target.value })}
-              className="w-full p-2 mb-2 bg-[#0B0E11]"
-            />
+              className="w-full p-2 mb-2 bg-[#0B0E11]" />
 
-            <input
-              placeholder="URL"
+            <input placeholder="URL"
               value={form.url}
               onChange={e => setForm({ ...form, url: e.target.value })}
-              className="w-full p-2 mb-2 bg-[#0B0E11]"
-            />
+              className="w-full p-2 mb-2 bg-[#0B0E11]" />
 
-            <input
-              placeholder="Tempo (segundos)"
+            <input placeholder="Tempo (segundos)"
               value={form.minSeconds}
               onChange={e => setForm({ ...form, minSeconds: e.target.value })}
+              className="w-full p-2 mb-2 bg-[#0B0E11]" />
+
+            {/* 🔥 LIMITE */}
+            <input
+              placeholder="Limite (ex: 500)"
+              value={form.totalLimit}
+              onChange={e => setForm({ ...form, totalLimit: e.target.value })}
               className="w-full p-2 mb-3 bg-[#0B0E11]"
             />
 
-            {/* IMAGE UPLOAD */}
-            <input
-              type="file"
-              accept="image/*"
+            <input type="file" accept="image/*"
               className="mb-3"
               onChange={(e) => {
                 const file = e.target.files?.[0]
                 if (!file) return
-
                 const reader = new FileReader()
-                reader.onloadend = () => {
-                  setImage(reader.result as string)
-                }
+                reader.onloadend = () => setImage(reader.result as string)
                 reader.readAsDataURL(file)
               }}
             />
 
-            {/* PREVIEW */}
             {image && (
-              <img
-                src={image}
-                className="w-full h-32 object-cover rounded mb-3"
-              />
+              <img src={image} className="w-full h-32 object-cover rounded mb-3" />
             )}
 
             <div className="flex gap-2">
-              <button
-                onClick={createTask}
-                className="bg-[#FCD535] text-black w-full py-2 rounded"
-              >
+              <button onClick={createTask} className="bg-[#FCD535] text-black w-full py-2 rounded">
                 Criar
               </button>
 
-              <button
-                onClick={() => setShowCreate(false)}
-                className="bg-gray-600 w-full py-2 rounded"
-              >
+              <button onClick={() => setShowCreate(false)} className="bg-gray-600 w-full py-2 rounded">
                 Cancelar
               </button>
             </div>
 
           </div>
-
         </div>
       )}
 
+      {/* PREVIEW */}
       {previewImage && (
-  <div
-    className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
-    onClick={() => setPreviewImage(null)}
-  >
-    <img
-      src={previewImage}
-      className="max-w-[90%] max-h-[90%] rounded-xl shadow-2xl"
-    />
-  </div>
-)}
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+          onClick={() => setPreviewImage(null)}>
+          <img src={previewImage} className="max-w-[90%] max-h-[90%] rounded-xl" />
+        </div>
+      )}
 
     </div>
   )

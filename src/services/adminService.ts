@@ -9,7 +9,7 @@ export async function getTasks() {
 }
 
 /* =========================
-   CREATE TASK
+   CREATE TASK (🔥 COM LIMITE)
 ========================= */
 export async function createTask(payload: {
   title: string
@@ -17,7 +17,8 @@ export async function createTask(payload: {
   reward: string
   url?: string
   minSeconds: string
-  imageUrl?: string | null // 🔥 ADICIONADO
+  imageUrl?: string | null
+  totalLimit?: string   // 🔥 NOVO
 }) {
 
   const body = {
@@ -30,8 +31,11 @@ export async function createTask(payload: {
     minSeconds: Number(payload.minSeconds),
 
     url: payload.url || null,
+    imageUrl: payload.imageUrl || null,
 
-    imageUrl: payload.imageUrl || null // 🔥 ADICIONADO
+    totalLimit: payload.totalLimit
+      ? Number(payload.totalLimit)
+      : 100 // fallback padrão
   }
 
   const { data } = await api.post('/admin/tasks/create', body)
