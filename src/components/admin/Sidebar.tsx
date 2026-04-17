@@ -28,7 +28,7 @@ const linkBase =
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 h-screen bg-[#0a0a0a] border-r border-white/5 flex flex-col sticky top-0 overflow-hidden">
+    <aside className="w-64 h-screen bg-[#0a0a0a] border-r border-white/5 flex flex-col sticky top-0 overflow-y-auto">
       
       {/* LOGO FIXO - HEADER */}
       <div className="h-20 flex items-center px-8 border-b border-white/5 flex-shrink-0">
@@ -42,8 +42,8 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* NAV COM SCROLL INTELIGENTE */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 no-scrollbar scroll-smooth">
+      {/* NAV COM SCROLL */}
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 scroll-smooth">
         
         <div className={sectionTitle}>Core System</div>
         <SidebarLink to="/admin" icon={<LayoutDashboard size={20} />}>Dashboard</SidebarLink>
@@ -76,15 +76,17 @@ export default function Sidebar() {
         <SidebarLink to="/admin/otc/assets" icon={<Briefcase size={20} />}>Ativos Disponíveis</SidebarLink>
         <SidebarLink to="/admin/otc/audit" icon={<ShieldCheck size={20} />}>Auditoria OTC</SidebarLink>
 
-        {/* ESPAÇO FINAL PARA NÃO CORTAR NO MOBILE */}
+        {/* Espaço extra para scroll confortável */}
         <div className="h-20" />
       </nav>
 
-      {/* FOOTER DA SIDEBAR */}
+      {/* FOOTER */}
       <div className="p-4 border-t border-white/5 bg-[#0d0d0d]">
         <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-xl border border-white/5">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Sistema Online</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+            Sistema Online
+          </span>
         </div>
       </div>
     </aside>
