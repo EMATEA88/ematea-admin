@@ -83,20 +83,22 @@ export const AdminService = {
 },
 
   // ================= RECHARGES =================
-  recharges: async () => {
-    const { data } = await api.get("/admin/recharges")
-    return data
-  },
+recharges: async () => {
+  const response = await api.get("/admin/recharges")
+  // 🟢 Verificamos se os dados estão dentro de response.data.data ou apenas response.data
+  // Muitas APIs padronizadas usam { success: true, data: [...] }
+  return response.data.data || response.data
+},
 
-  approveRecharge: async (id: number) => {
-    const { data } = await api.patch(`/admin/recharges/${id}/approve`)
-    return data
-  },
+approveRecharge: async (id: number) => {
+  const { data } = await api.patch(`/admin/recharges/${id}/approve`)
+  return data
+},
 
-  rejectRecharge: async (id: number) => {
-    const { data } = await api.patch(`/admin/recharges/${id}/reject`)
-    return data
-  },
+rejectRecharge: async (id: number) => {
+  const { data } = await api.patch(`/admin/recharges/${id}/reject`)
+  return data
+},
 
   // ================= WITHDRAWALS =================
   withdrawals: async (
