@@ -6,6 +6,7 @@ interface Recharge {
   id: number
   amount: number
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  image: string | null
   user?: {
     phone: string
   }
