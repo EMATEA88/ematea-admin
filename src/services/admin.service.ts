@@ -83,19 +83,31 @@ export const AdminService = {
 },
 
   // ================= RECHARGES =================
+
 recharges: async () => {
   const response = await api.get("/admin/recharges")
-  // 🟢 Verificamos se os dados estão dentro de response.data.data ou apenas response.data
-  // Muitas APIs padronizadas usam { success: true, data: [...] }
-  return response.data.data || response.data
+
+  // 🔥 Normalização robusta
+  if (Array.isArray(response.data)) return response.data
+  if (Array.isArray(response.data?.data)) return response.data.data
+
+  return []
 },
 
 approveRecharge: async (id: number) => {
+  if (!id || isNaN(id)) {
+    throw new Error("INVALID_ID")
+  }
+
   const { data } = await api.patch(`/admin/recharges/${id}/approve`)
   return data
 },
 
 rejectRecharge: async (id: number) => {
+  if (!id || isNaN(id)) {
+    throw new Error("INVALID_ID")
+  }
+
   const { data } = await api.patch(`/admin/recharges/${id}/reject`)
   return data
 },

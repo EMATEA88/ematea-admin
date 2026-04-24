@@ -4,8 +4,9 @@ import { AdminService } from '../../services/admin.service'
 
 interface Recharge {
   id: number
-  amount: number
-  currency: 'AOA' | 'USDT'
+  amount: number | string
+  currency?: string
+  method?: string
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   image: string | null
   user?: {
@@ -32,9 +33,15 @@ export default function Recharges() {
     try {
       setLoading(true)
       const response = await AdminService.recharges()
-      console.log("DADOS DA API:", response) // 🟢 Verifique o console F12
-      const list = Array.isArray(response) ? response : response?.items ?? []
+
+      const list = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+        ? response.data
+        : []
+
       setItems(list)
+
     } catch {
       toast.error('Erro ao carregar recargas')
     } finally {
@@ -47,8 +54,15 @@ export default function Recharges() {
     try {
       setProcessing({ id, action: 'approve' })
       await AdminService.approveRecharge(id)
+
+      setItems(prev =>
+        prev.map(item =>
+          item.id === id ? { ...item, status: 'APPROVED' } : item
+        )
+      )
+
       toast.success('Recarga aprovada')
-      setItems(prev => prev.map(item => item.id === id ? { ...item, status: 'APPROVED' } : item))
+
     } catch (err: any) {
       toast.error(err?.response?.data?.error || 'Erro ao aprovar')
     } finally {
@@ -61,8 +75,15 @@ export default function Recharges() {
     try {
       setProcessing({ id, action: 'reject' })
       await AdminService.rejectRecharge(id)
+
+      setItems(prev =>
+        prev.map(item =>
+          item.id === id ? { ...item, status: 'REJECTED' } : item
+        )
+      )
+
       toast.success('Recarga rejeitada')
-      setItems(prev => prev.map(item => item.id === id ? { ...item, status: 'REJECTED' } : item))
+
     } catch (err: any) {
       toast.error(err?.response?.data?.error || 'Erro ao rejeitar')
     } finally {
@@ -89,7 +110,8 @@ export default function Recharges() {
             <tr>
               <th className="p-4 text-left">ID</th>
               <th className="p-4 text-left">Usuário</th>
-              <th className="p-4 text-left">Valor / Moeda</th>
+              <th className="p-4 text-left">Valor</th>
+              <th className="p-4 text-left">Método</th>
               <th className="p-4 text-left">Comprovativo</th>
               <th className="p-4 text-left">Status</th>
               <th className="p-4 text-right">Ação</th>
@@ -99,38 +121,49 @@ export default function Recharges() {
           <tbody className="divide-y divide-gray-800/50">
             {items.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-12 text-center text-gray-500 italic">Nenhuma recarga encontrada</td>
+                <td colSpan={7} className="p-12 text-center text-gray-500 italic">
+                  Nenhuma recarga encontrada
+                </td>
               </tr>
             )}
 
             {items.map((r) => {
               const isApproving = processing?.id === r.id && processing.action === 'approve'
               const isRejecting = processing?.id === r.id && processing.action === 'reject'
-              
-              // 🔍 Logica de detecção de moeda
-              const rawCurrency = (r as any).currency || (r as any).Currency || 'AOA'
-              const isUSDT = String(rawCurrency).trim().toUpperCase() === 'USDT'
+
+              const currency = String(r.currency || 'AOA').toUpperCase().trim()
+              const method = String(r.method || 'BANK').toUpperCase()
+              const amount = Number(r.amount || 0)
+
+              const isUSDT = currency === 'USDT' || currency === 'USDC'
 
               return (
-                <tr key={r.id} className="hover:bg-gray-800/20 transition duration-150">
+                <tr key={r.id} className="hover:bg-gray-800/20 transition">
                   <td className="p-4 text-gray-500 text-xs font-mono">#{r.id}</td>
-                  <td className="p-4 font-semibold text-gray-200">{r.user?.phone || '—'}</td>
-                  
-                  {/* VALOR DINÂMICO */}
-                  <td className={`p-4 font-bold text-base ${isUSDT ? 'text-cyan-400' : 'text-emerald-400'}`}>
-                    {isUSDT ? (
-                      <span className="flex items-center gap-1">
-                        {Number(r.amount).toFixed(2)}
-                        <span className="text-[10px] bg-cyan-500/10 px-1 rounded text-cyan-500 font-black">USDT</span>
-                      </span>
-                    ) : (
-                      <span>
-                        {new Intl.NumberFormat("pt-AO", { 
-                          style: "currency", 
-                          currency: "AOA" 
-                        }).format(r.amount || 0)}
-                      </span>
-                    )}
+
+                  <td className="p-4 font-semibold text-gray-200">
+                    {r.user?.phone || '—'}
+                  </td>
+
+                  {/* VALOR */}
+                  <td className={`p-4 font-bold ${isUSDT ? 'text-cyan-400' : 'text-emerald-400'}`}>
+                    {isUSDT
+                      ? `${amount.toFixed(2)} USDT`
+                      : new Intl.NumberFormat("pt-AO", {
+                          style: "currency",
+                          currency: "AOA"
+                        }).format(amount)}
+                  </td>
+
+                  {/* MÉTODO */}
+                  <td className="p-4">
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      method === 'CRYPTO'
+                        ? 'bg-cyan-500/10 text-cyan-400'
+                        : 'bg-emerald-500/10 text-emerald-400'
+                    }`}>
+                      {method}
+                    </span>
                   </td>
 
                   {/* COMPROVATIVO */}
@@ -138,12 +171,12 @@ export default function Recharges() {
                     {r.image ? (
                       <button
                         onClick={() => window.open(r.image!, '_blank')}
-                        className="text-cyan-400 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-gray-800 hover:border-cyan-500/50 transition-all shadow-sm"
+                        className="text-cyan-400 text-xs"
                       >
-                        📄 VER PRINT
+                        VER
                       </button>
                     ) : (
-                      <span className="text-gray-600 text-[10px] italic font-medium">SEM ANEXO</span>
+                      <span className="text-gray-600 text-xs">SEM</span>
                     )}
                   </td>
 
@@ -154,27 +187,25 @@ export default function Recharges() {
 
                   {/* AÇÕES */}
                   <td className="p-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      {r.status === 'PENDING' && (
-                        <>
-                          <button
-                            disabled={!!processing}
-                            onClick={() => approve(r.id)}
-                            className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-800 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
-                          >
-                            {isApproving ? '...' : 'Aprovar'}
-                          </button>
+                    {r.status === 'PENDING' && (
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          disabled={!!processing}
+                          onClick={() => approve(r.id)}
+                          className="bg-emerald-600 px-3 py-1 text-xs rounded"
+                        >
+                          {isApproving ? '...' : 'Aprovar'}
+                        </button>
 
-                          <button
-                            disabled={!!processing}
-                            onClick={() => reject(r.id)}
-                            className="bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white disabled:bg-gray-800 px-4 py-1.5 rounded-lg text-xs font-bold border border-red-600/20 transition-all"
-                          >
-                            {isRejecting ? '...' : 'Rejeitar'}
-                          </button>
-                        </>
-                      )}
-                    </div>
+                        <button
+                          disabled={!!processing}
+                          onClick={() => reject(r.id)}
+                          className="bg-red-600 px-3 py-1 text-xs rounded"
+                        >
+                          {isRejecting ? '...' : 'Rejeitar'}
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               )
@@ -188,12 +219,13 @@ export default function Recharges() {
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    PENDING: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-    APPROVED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    REJECTED: 'bg-red-500/10 text-red-400 border-red-500/20',
+    PENDING: 'bg-amber-500/10 text-amber-500',
+    APPROVED: 'bg-emerald-500/10 text-emerald-400',
+    REJECTED: 'bg-red-500/10 text-red-400',
   }
+
   return (
-    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ${styles[status] || 'bg-gray-800 text-gray-400 border-gray-700'}`}>
+    <span className={`px-2 py-1 text-xs rounded ${styles[status] || ''}`}>
       {status}
     </span>
   )
