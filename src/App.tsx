@@ -100,7 +100,7 @@ export default function App() {
           {/* OTC */}
           <Route path="otc" element={<OTC />} />
           <Route path="otc/orders" element={<OtcOrders />} />
-          <Route path="otc/orders/:id" element={<OtcOrdemDetalhe />} />
+         <Route path="otc/ordem/:id" element={<OtcOrdemDetalhe />} />
           <Route path="otc/stats" element={<OtcStats />} />
           <Route path="otc/assets" element={<OtcAssets />} />
           <Route path="otc/audit" element={<OTCAudit />} />
