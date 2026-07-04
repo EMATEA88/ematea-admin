@@ -16,7 +16,6 @@ import Banks from "./pages/admin/Banks"
 import AdminFinance from "./pages/admin/AdminFinance"
 import AdminLogs from "./pages/admin/AdminLogs"
 import AdminServiceRequests from "./pages/admin/services/AdminServiceRequests"
-import SupportChat from "./pages/admin/SupportChat"
 import AdminPartners from "./pages/admin/AdminPartners"
 import AdminKYCPage from "./pages/admin/kyc/AdminKYCPage"
 import AdminLogin from "./pages/admin/Login"
@@ -76,7 +75,6 @@ export default function App() {
           <Route path="finance" element={<AdminFinance />} />
           <Route path="logs" element={<AdminLogs />} />
           <Route path="partners" element={<AdminPartners />} />
-          <Route path="support" element={<SupportChat />} />
           <Route path="kyc" element={<AdminKYCPage />} />
           <Route path="agents" element={<Agents />} />
           <Route path="subagents" element={<SubAgents />} />
