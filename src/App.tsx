@@ -15,25 +15,13 @@ import AdminGift from "./pages/admin/Gifts"
 import Banks from "./pages/admin/Banks"
 import AdminFinance from "./pages/admin/AdminFinance"
 import AdminLogs from "./pages/admin/AdminLogs"
-import OtcOrders from "./components/admin/OtcOrders"
-import OtcStats from "./components/admin/OtcStats"
-import OtcAssets from "./pages/admin/OtcAssets"
-import OTC from "./pages/admin/OTC"
-import OTCAudit from "./pages/admin/OTCAudit"
-import OTCPriceHistory from "./pages/admin/OTCPriceHistory"
-import AdminSettlements from "./pages/admin/settlements/AdminSettlements"
 import AdminServiceRequests from "./pages/admin/services/AdminServiceRequests"
-import AdminServiceRefunds from "./pages/admin/service-refunds/AdminServiceRefunds"
-import AdminRevenue from "./pages/admin/revenue/AdminRevenue"
 import SupportChat from "./pages/admin/SupportChat"
 import AdminPartners from "./pages/admin/AdminPartners"
 import AdminKYCPage from "./pages/admin/kyc/AdminKYCPage"
-import OtcOrdemDetalhe from "./pages/admin/OtcOrdemDetalhe"
-import AdminApplications from "./pages/admin/AdminApplications"
-import AdminKixikila from "./pages/admin/AdminKixikila"
-import AdminDashboard from './pages/AdminDashboard'
-import TaskManager from "./pages/admin/TaskManager"
 import AdminLogin from "./pages/admin/Login"
+import Agents from "./pages/admin/Agents"
+import SubAgents from "./pages/admin/SubAgents"
 
 export default function App() {
   return (
@@ -90,27 +78,11 @@ export default function App() {
           <Route path="partners" element={<AdminPartners />} />
           <Route path="support" element={<SupportChat />} />
           <Route path="kyc" element={<AdminKYCPage />} />
-          <Route path="/admin/kixikila" element={<AdminKixikila />} />
-          <Route path="/admin/tasks" element={<AdminDashboard />} />
-          <Route path="/admin/task-manager" element={<TaskManager />} />
-
-          {/* INVESTMENTS */}
-          <Route path="applications" element={<AdminApplications />} />
-
-          {/* OTC */}
-          <Route path="otc" element={<OTC />} />
-          <Route path="otc/orders" element={<OtcOrders />} />
-         <Route path="otc/ordem/:id" element={<OtcOrdemDetalhe />} />
-          <Route path="otc/stats" element={<OtcStats />} />
-          <Route path="otc/assets" element={<OtcAssets />} />
-          <Route path="otc/audit" element={<OTCAudit />} />
-          <Route path="otc/price-history" element={<OTCPriceHistory />} />
+          <Route path="agents" element={<Agents />} />
+          <Route path="subagents" element={<SubAgents />} />
 
           {/* SERVICES */}
-          <Route path="settlements" element={<AdminSettlements />} />
           <Route path="services" element={<AdminServiceRequests />} />
-          <Route path="service-refunds" element={<AdminServiceRefunds />} />
-          <Route path="revenue" element={<AdminRevenue />} />
         </Route>
 
         {/* FALLBACK */}

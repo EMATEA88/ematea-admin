@@ -9,12 +9,9 @@ import {
   Bell,
   BarChart3,
   FileText,
-  Activity,
-  LineChart,
-  DollarSign,
   Building2,
   ShieldCheck,
-  Folder
+  UserCheck
 } from "lucide-react"
 
 const sectionTitle =
@@ -45,6 +42,14 @@ export default function Sidebar() {
 
           <SidebarLink to="/admin/users" icon={<Users size={18} />}>
             Utilizadores
+          </SidebarLink>
+
+          <SidebarLink to="/admin/agents" icon={<UserCheck size={18} />}>
+            Agentes
+          </SidebarLink>
+
+          <SidebarLink to="/admin/subagents" icon={<Users size={18} />}>
+            Sub-Agentes
           </SidebarLink>
 
           <SidebarLink to="/admin/logs" icon={<FileText size={18} />}>
@@ -78,18 +83,6 @@ export default function Sidebar() {
             Comissões
           </SidebarLink>
 
-          <SidebarLink to="/admin/applications" icon={<LineChart size={18} />}>
-            Investimentos
-          </SidebarLink>
-
-          <SidebarLink to="/admin/settlements" icon={<Folder size={18} />}>
-            Partner Settlements
-          </SidebarLink>
-
-          <SidebarLink to="/admin/revenue" icon={<DollarSign size={18} />}>
-            Revenue Control
-          </SidebarLink>
-
           <SidebarLink to="/admin/finance" icon={<BarChart3 size={18} />}>
             Finance Dashboard
           </SidebarLink>
@@ -98,72 +91,22 @@ export default function Sidebar() {
           <div className={sectionTitle}>Serviços</div>
 
           <SidebarLink to="/admin/services">
-            Service Requests
-          </SidebarLink>
-
-          <SidebarLink to="/admin/task-manager">
-            Gestão de Tarefas
-          </SidebarLink>
-
-          {/* KIXIKILA */}
-          <div className={sectionTitle}>Kixikila</div>
-
-          <SidebarLink to="/admin/kyc" icon={<ShieldCheck size={18} />}>
-            KYC Verification
-          </SidebarLink>
-
-          <SidebarLink to="/admin/service-refunds">
-            Service Refunds
+            Solicitações
           </SidebarLink>
 
           <SidebarLink to="/admin/partners">
-            Partners
+            Parceiros
           </SidebarLink>
 
-          {/* ADMIN */}
-          <div className={sectionTitle}>Admin</div>
+          {/* COMPLIANCE */}
+          <div className={sectionTitle}>Compliance</div>
 
-          <SidebarLink to="/admin/tasks" icon={<FileText size={18} />}>
-            Tarefas
-          </SidebarLink>
-
-          <SidebarLink to="/admin/stats" icon={<BarChart3 size={18} />}>
-            Estatísticas
-          </SidebarLink>
-
-          <SidebarLink to="/admin/kixikila" icon={<Users size={18} />}>
-            Kixikila Admin
+          <SidebarLink to="/admin/kyc" icon={<ShieldCheck size={18} />}>
+            KYC
           </SidebarLink>
 
           <SidebarLink to="/admin/gift" icon={<Gift size={18} />}>
             Gift
-          </SidebarLink>
-
-          {/* OTC */}
-          <div className={sectionTitle}>OTC</div>
-
-          <SidebarLink to="/admin/otc" icon={<BarChart3 size={18} />}>
-            OTC Dashboard
-          </SidebarLink>
-
-          <SidebarLink to="/admin/otc/orders">
-            OTC Orders
-          </SidebarLink>
-
-          <SidebarLink to="/admin/otc/assets">
-            OTC Assets
-          </SidebarLink>
-
-          <SidebarLink to="/admin/otc/stats">
-            OTC Stats
-          </SidebarLink>
-
-          <SidebarLink to="/admin/otc/audit" icon={<Activity size={18} />}>
-            OTC Auditoria
-          </SidebarLink>
-
-          <SidebarLink to="/admin/otc/price-history" icon={<LineChart size={18} />}>
-            Histórico Preços
           </SidebarLink>
 
           {/* 🔥 espaço extra para garantir scroll até o fim */}

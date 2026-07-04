@@ -43,12 +43,6 @@ export const AdminService = {
     return data
   },
 
-  // ================= OTC FINANCE (🔥 NOVO PADRÃO) =================
-  financialSummary: async () => {
-    const { data } = await api.get("/admin/otc/financial-summary")
-    return data
-  },
-
   // ================= USERS =================
   users: async () => {
     const { data } = await api.get("/admin/users")
@@ -85,6 +79,67 @@ export const AdminService = {
 
   commissions: async () => {
     const { data } = await api.get("/admin/commissions")
+    return data
+  },
+
+  // ================= AGENTS =================
+  agents: async (
+    params?: {
+      status?: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED"
+      page?: number
+      limit?: number
+      search?: string
+    }
+  ) => {
+    const { data } = await api.get("/admin/agents", { params })
+    return data
+  },
+
+  agentDetails: async (id: number) => {
+    const { data } = await api.get(`/admin/agents/${id}`)
+    return data
+  },
+
+  approveAgent: async (id: number) => {
+    const { data } = await api.patch(`/admin/agents/${id}/approve`)
+    return data
+  },
+
+  rejectAgent: async (id: number, reason: string) => {
+    const { data } = await api.patch(
+      `/admin/agents/${id}/reject`,
+      { reason }
+    )
+    return data
+  },
+
+  suspendAgent: async (id: number, reason: string) => {
+    const { data } = await api.patch(
+      `/admin/agents/${id}/suspend`,
+      { reason }
+    )
+    return data
+  },
+
+  activateAgent: async (id: number) => {
+    const { data } = await api.patch(
+      `/admin/agents/${id}/activate`
+    )
+    return data
+  },
+
+  adjustAgentCommission: async (id: number, amount: number) => {
+    const { data } = await api.patch(
+      `/admin/agents/${id}/commission`,
+      { amount }
+    )
+    return data
+  },
+
+  agentStatistics: async () => {
+    const { data } = await api.get(
+      "/admin/agents/statistics"
+    )
     return data
   },
 
@@ -142,162 +197,9 @@ export const AdminService = {
     return data
   },
 
-  // ================= OTC =================
-  otcOrders: async (params?: any) => {
-    const { data } = await api.get("/admin/otc/orders", { params })
-    return data
-  },
-
-  otcOrderDetail: async (id: number) => {
-    const { data } = await api.get(`/admin/otc/orders/${id}`)
-    return data
-  },
-
-  otcStats: async () => {
-    const { data } = await api.get("/admin/otc/stats")
-    return data
-  },
-
-  cancelOtcOrder: async (id: number) => {
-    const { data } = await api.patch(`/admin/otc/orders/${id}/cancel`)
-    return data
-  },
-
-  releaseOtcOrder: async (id: number) => {
-    const { data } = await api.patch(`/admin/otc/orders/${id}/release`)
-    return data
-  },
-
-  markSellAsPaid: async (id: number) => {
-  const { data } = await api.patch(`/admin/otc/orders/${id}/sell-paid`)
-  return data
-},
-
-  otcAssets: async () => {
-    const { data } = await api.get("/admin/otc/assets")
-    return data
-  },
-
-  updateOtcAsset: async (
-    id: number,
-    buyPrice: number,
-    sellPrice: number
-  ) => {
-    const { data } = await api.patch(
-      `/admin/otc/assets/${id}`,
-      { buyPrice, sellPrice }
-    )
-    return data
-  },
-
-  otcPriceHistory: async (page = 1, limit = 20) => {
-    const { data } = await api.get(
-      "/admin/otc/price-history",
-      { params: { page, limit } }
-    )
-    return data
-  },
-
-  otcAudit: async (page = 1, limit = 20) => {
-    const { data } = await api.get(
-      "/admin/otc/audit",
-      { params: { page, limit } }
-    )
-    return data
-  },
-
-  // 🔥 ALIAS (mantido para compatibilidade)
-  getOtcFinancialSummary: async () => {
-    const { data } = await api.get("/admin/otc/financial-summary")
-    return data
-  },
-
-  // ================= SERVICE REFUNDS =================
-  getServiceRefunds: async (params?: { status?: string }) => {
-    const { data } = await api.get("/admin/service-refunds", { params })
-    return data
-  },
-
-  getServiceRefundStats: async () => {
-    const { data } = await api.get("/admin/service-refunds/stats")
-    return data
-  },
-
-  refundService: async (id: number) => {
-    const { data } = await api.patch(`/admin/service-refunds/${id}/refund`)
-    return data
-  },
-
-  // ================= SERVICE REQUESTS =================
-  getServiceRequests: async () => {
-    const { data } = await api.get("/admin/services")
-    return data
-  },
-
-  completeService: async (id: number) => {
-    const { data } = await api.patch(`/admin/services/${id}/complete`)
-    return data
-  },
-
-  // ================= SETTLEMENTS =================
-  getSettlements: async (params?: any) => {
-    const { data } = await api.get("/admin/settlements", { params })
-    return data
-  },
-
-  getSettlementStats: async () => {
-    const { data } = await api.get("/admin/settlements/stats")
-    return data
-  },
-
-  paySettlement: async (id: number) => {
-    const { data } = await api.patch(`/admin/settlements/${id}/pay`)
-    return data
-  },
-
-  // ================= SUPPORT =================
-  supportList: async () => {
-    const { data } = await api.get("/admin/support")
-    return data
-  },
-
-  supportAdminSend: async (payload: {
-    conversationId: number
-    message: string
-  }) => {
-    const { data } = await api.post("/admin/support/send", payload)
-    return data
-  },
-
   // ================= TRANSACTIONS =================
   transactions: async () => {
     const { data } = await api.get("/admin/transactions")
-    return data
-  },
-
-  // ================= OTC CHAT =================
-  sendOtcMessage: async (
-    orderId: number,
-    content: string,
-    type: "TEXT" | "IMAGE" | "AUDIO" | "VIDEO" = "TEXT"
-  ) => {
-    const { data } = await api.post(
-      `/admin/otc/chat/${orderId}`,
-      { content, type }
-    )
-    return data
-  },
-
-  uploadOtcImage: async (orderId: number, file: File) => {
-    const form = new FormData()
-    form.append("image", file)
-
-    const { data } = await api.post(
-      `/admin/otc/chat/${orderId}/image`,
-      form,
-      { headers: { "Content-Type": "multipart/form-data" } }
-    )
-
     return data
   },
 
@@ -328,5 +230,4 @@ export const AdminService = {
     const { data } = await api.delete(`/admin/bank-admin/${id}`)
     return data
   }
-
 }
