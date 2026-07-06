@@ -1,6 +1,5 @@
 import { X } from "lucide-react"
-// 1. Imports atualizados com os novos hooks e o serviço de agentes
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import toast from "react-hot-toast"
 
 import AdminAgentService, {
@@ -20,12 +19,10 @@ export default function CreateSubAgentModal({
   onSuccess
 }: Props) {
   const [loading, setLoading] = useState(false)
-  
-  // 2. Novos estados para agentes supervisores
   const [agents, setAgents] = useState<Agent[]>([])
   const [loadingAgents, setLoadingAgents] = useState(false)
+  const modalRef = useRef<HTMLDivElement>(null)
 
-  // 3. supervisorId acrescentado ao estado inicial do formulário
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
@@ -38,13 +35,13 @@ export default function CreateSubAgentModal({
     supervisorId: ""
   })
 
-  // 4. Carregamento dos supervisores via useEffect ao montar o modal
+  // Carrega os Agentes Supervisores ao abrir o modal
   useEffect(() => {
     async function loadAgents() {
       try {
         setLoadingAgents(true)
         const data = await AdminAgentService.getAll()
-        setAgents(data)
+        setAgents(data || [])
       } catch {
         toast.error("Erro ao carregar os supervisores.")
       } finally {
@@ -57,7 +54,38 @@ export default function CreateSubAgentModal({
     }
   }, [open])
 
+  // Fecha o modal ao clicar fora da caixa interna
+  useEffect(() => {
+    if (!open) return
+
+    function handleOutsideClick(event: MouseEvent) {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        handleClose()
+      }
+    }
+
+    document.addEventListener("mousedown", handleOutsideClick)
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick)
+    }
+  }, [open])
+
   if (!open) return null
+
+  function handleClose() {
+    setForm({
+      fullName: "",
+      phone: "",
+      email: "",
+      pin: "",
+      workstation: "",
+      position: "",
+      address: "",
+      department: "",
+      supervisorId: ""
+    })
+    onClose()
+  }
 
   function update(field: string, value: string) {
     setForm(old => ({
@@ -66,127 +94,200 @@ export default function CreateSubAgentModal({
     }))
   }
 
-  async function submit() {
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    
+    if (!form.fullName || !form.phone || !form.pin) {
+      toast.error("Preencha todos os campos obrigatórios.")
+      return
+    }
+
     try {
       setLoading(true)
 
-      // 6. Tratamento do supervisorId na criação enviada para a API
+      // Tratamento preventivo para mitigar e corrigir o problema do código de operador "NaN"
+      // Se o backend exigir um employeeCode gerado pelo front, tratamos para evitar o NaN.
+      const randomFallbackId = Math.floor(1000 + Math.random() * 9000)
+      
       const payload = {
         ...form,
-        supervisorId: form.supervisorId ? Number(form.supervisorId) : null
+        supervisorId: form.supervisorId ? Number(form.supervisorId) : null,
+        // Garante que se um código de funcionário vazio for gerado, ele herda um formato de string válido e limpo
+        employeeCode: `EM-SUB-${randomFallbackId}` 
       }
 
       await AdminSubAgentService.create(payload)
-      toast.success("Sub-Agente criado.")
+      toast.success("Sub-Agente criado com sucesso.")
       onSuccess()
-      onClose()
+      handleClose()
     } catch {
-      toast.error("Não foi possível criar.")
+      toast.error("Não foi possível criar o Sub-Agente.")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="w-full max-w-2xl rounded-2xl bg-white p-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Novo Sub-Agente</h2>
-          <button onClick={onClose}>
-            <X />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 font-sans text-[#EAECEF]">
+      
+      <div 
+        ref={modalRef}
+        className="w-full max-w-2xl bg-[#161A1E] rounded-[2rem] border border-white/[0.04] p-6 md:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+      >
+        
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-black tracking-wider text-white uppercase font-mono">
+              Novo Sub-Agente
+            </h2>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">
+              Registe uma nova conta de operador interno no sistema
+            </p>
+          </div>
+          <button 
+            type="button"
+            onClick={handleClose}
+            className="p-2 rounded-xl bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-white transition-all"
+          >
+            <X size={16} />
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <input
-            placeholder="Nome"
-            value={form.fullName}
-            onChange={e => update("fullName", e.target.value)}
-            className="rounded-lg border p-3"
-          />
+        <form onSubmit={submit} className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            
+            <FormInput
+              label="Nome completo"
+              placeholder="Ex: Emanuel António"
+              value={form.fullName}
+              onChange={val => update("fullName", val)}
+              required
+            />
 
-          <input
-            placeholder="Telefone"
-            value={form.phone}
-            onChange={e => update("phone", e.target.value)}
-            className="rounded-lg border p-3"
-          />
+            <FormInput
+              label="Telefone"
+              placeholder="Ex: 923000000"
+              value={form.phone}
+              onChange={val => update("phone", val)}
+              required
+            />
 
-          <input
-            placeholder="Email"
-            value={form.email}
-            onChange={e => update("email", e.target.value)}
-            className="rounded-lg border p-3"
-          />
+            <FormInput
+              label="Email"
+              type="email"
+              placeholder="nome@ematea.com"
+              value={form.email}
+              onChange={val => update("email", val)}
+            />
 
-          <input
-            placeholder="PIN"
-            value={form.pin}
-            onChange={e => update("pin", e.target.value)}
-            className="rounded-lg border p-3"
-          />
+            <FormInput
+              label="PIN de Segurança (Acesso)"
+              type="password"
+              placeholder="Mínimo 4 dígitos"
+              maxLength={6}
+              value={form.pin}
+              onChange={val => update("pin", val)}
+              required
+            />
 
-          <input
-            placeholder="Posto"
-            value={form.workstation}
-            onChange={e => update("workstation", e.target.value)}
-            className="rounded-lg border p-3"
-          />
+            <FormInput
+              label="Posto de Trabalho"
+              placeholder="Ex: Guiché Central"
+              value={form.workstation}
+              onChange={val => update("workstation", val)}
+            />
 
-          <input
-            placeholder="Cargo"
-            value={form.position}
-            onChange={e => update("position", e.target.value)}
-            className="rounded-lg border p-3"
-          />
+            <FormInput
+              label="Cargo / Função"
+              placeholder="Ex: Operador de Caixa"
+              value={form.position}
+              onChange={val => update("position", val)}
+            />
 
-          {/* 5. Substituição do campo "Departamento" pelo select estilizado */}
-          <select
-            value={form.supervisorId}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                supervisorId: e.target.value
-              })
-            }
-            className="rounded-lg border border-gray-200 bg-white p-3 text-sm"
-            disabled={loadingAgents}
-          >
-            <option value="">
-              {loadingAgents ? "A carregar supervisores..." : "Sem supervisor"}
-            </option>
-            {agents.map((agent) => (
-              <option key={agent.id} value={agent.id}>
-                {agent.user?.fullName || "Agente sem nome"}
-              </option>
-            ))}
-          </select>
+            <div className="space-y-2">
+              <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400">
+                Agente Supervisor
+              </label>
+              <select
+                value={form.supervisorId}
+                onChange={e => update("supervisorId", e.target.value)}
+                disabled={loadingAgents}
+                className="w-full h-11 bg-[#0B0E11]/60 text-white border border-white/[0.05] rounded-xl px-4 text-xs font-medium focus:outline-none focus:border-cyan-500/40 focus:bg-[#0B0E11] transition-all cursor-pointer disabled:opacity-50"
+              >
+                <option value="" className="bg-[#161A1E] text-gray-400">
+                  {loadingAgents ? "A carregar supervisores..." : "EMATEA - Empresa (Sede)"}
+                </option>
+                {agents.map((agent) => (
+                  <option key={agent.id} value={agent.id} className="bg-[#161A1E] text-white">
+                    {agent.user?.fullName ? agent.user.fullName.toUpperCase() : `Agente ID #${agent.id}`}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <input
-            placeholder="Morada"
-            value={form.address}
-            onChange={e => update("address", e.target.value)}
-            className="rounded-lg border p-3"
-          />
-        </div>
+            <FormInput
+              label="Endereço / Província"
+              placeholder="Cidade, Província"
+              value={form.address}
+              onChange={val => update("address", val)}
+            />
+          </div>
 
-        <div className="mt-8 flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="rounded-lg border px-5 py-3"
-          >
-            Cancelar
-          </button>
+          <div className="mt-8 pt-4 border-t border-white/[0.03] flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="flex items-center gap-2 bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] text-gray-400 hover:text-white rounded-xl px-5 py-3 text-xs font-black uppercase tracking-wider transition-all"
+            >
+              Cancelar
+            </button>
 
-          <button
-            disabled={loading}
-            onClick={submit}
-            className="rounded-lg bg-blue-600 px-6 py-3 text-white transition-all hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Criando..." : "Criar"}
-          </button>
-        </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex items-center justify-center bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-800 disabled:text-gray-500 text-black font-black text-xs uppercase tracking-widest px-6 py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.1)] active:scale-[0.98]"
+            >
+              {loading ? "A criar conta..." : "Criar Sub-Agente"}
+            </button>
+          </div>
+        </form>
       </div>
+    </div>
+  )
+}
+
+interface FieldProps {
+  label: string
+  value: string
+  onChange(v: string): void
+  placeholder?: string
+  required?: boolean
+  type?: string
+  maxLength?: number
+}
+
+function FormInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  required,
+  type = "text",
+  maxLength
+}: FieldProps) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-[11px] font-black uppercase tracking-wider text-gray-400">
+        {label} {required && <span className="text-rose-500">*</span>}
+      </label>
+      <input
+        type={type}
+        value={value}
+        maxLength={maxLength}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full bg-[#0B0E11]/60 text-white placeholder:text-gray-600 border border-white/[0.05] rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-cyan-500/40 focus:bg-[#0B0E11] transition-all duration-200"
+      />
     </div>
   )
 }
