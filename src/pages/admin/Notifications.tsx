@@ -3,10 +3,6 @@ import { useNavigate } from "react-router-dom"
 import toast from "react-hot-toast"
 import { AdminNotificationsService }
   from "../../services/admin.notifications.service"
-import {
-  connectAdminSocket,
-  disconnectAdminSocket
-} from "../../services/socket"
 
 interface NotificationItem {
   id: number
@@ -78,28 +74,7 @@ export default function AdminNotifications() {
 
     const token = localStorage.getItem("token")
     if (!token) return
-
-    const socket = connectAdminSocket(token)
-
-    socket.on("notification:new", (data: ToastData) => {
-
-      setToastData(data)
-      load()
-
-      toast("Nova notificação recebida", {
-        icon: "🔔"
-      })
-
-      setTimeout(() => {
-        setToastData(null)
-      }, 4000)
-    })
-
-    return () => {
-      socket.off("notification:new")
-      disconnectAdminSocket()
-    }
-
+   
   }, [])
 
   /* ================= SEND ================= */

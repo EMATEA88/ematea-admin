@@ -9,7 +9,7 @@ import Users from "./pages/admin/Users"
 import Recharges from "./pages/admin/Recharges"
 import Withdrawals from "./pages/admin/Withdrawals"
 import Transactions from "./pages/admin/Transactions"
-import Commissions from "./pages/admin/Commissions"
+import AdminCommissionsPage from "./pages/admin/commissions/AdminCommissionsPage"
 import Notifications from "./pages/admin/Notifications"
 import AdminGift from "./pages/admin/Gifts"
 import Banks from "./pages/admin/Banks"
@@ -69,7 +69,7 @@ export default function App() {
           <Route path="withdrawals" element={<Withdrawals />} />
           <Route path="banks" element={<Banks />} />
           <Route path="transactions" element={<Transactions />} />
-          <Route path="commissions" element={<Commissions />} />
+          <Route path="commissions" element={<AdminCommissionsPage />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="gift" element={<AdminGift />} />
           <Route path="finance" element={<AdminFinance />} />

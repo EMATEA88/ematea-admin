@@ -7,7 +7,6 @@ import {
   Repeat,
   Gift,
   Bell,
-  BarChart3,
   FileText,
   Building2,
   ShieldCheck,
@@ -81,10 +80,6 @@ export default function Sidebar() {
 
           <SidebarLink to="/admin/commissions" icon={<Repeat size={18} />}>
             Comissões
-          </SidebarLink>
-
-          <SidebarLink to="/admin/finance" icon={<BarChart3 size={18} />}>
-            Finance Dashboard
           </SidebarLink>
 
           {/* SERVIÇOS */}

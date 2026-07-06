@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Bell } from "lucide-react"
-import toast from "react-hot-toast"
 import { AdminNotificationsService } from "../../services/admin.notifications.service"
-import { connectAdminSocket } from "../../services/socket"
 
 export default function Topbar() {
 
@@ -26,16 +24,8 @@ export default function Topbar() {
     const token = localStorage.getItem("token")
     if (!token) return
 
-    const socket = connectAdminSocket(token)
+  
 
-    socket.on("notification:new", () => {
-      loadUnread()
-      toast("Nova notificação", { icon: "🔔" })
-    })
-
-    return () => {
-      socket.off("notification:new")
-    }
 
   }, [])
 
