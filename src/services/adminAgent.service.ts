@@ -82,6 +82,30 @@ class AdminAgentService {
     return data
   }
 
+  // Aprovar Agente
+  async approveAgent(id: number) {
+    const { data } = await api.patch(`/admin/agents/${id}/approve`)
+    return data
+  }
+
+  // Rejeitar Agente
+  async rejectAgent(id: number, notes?: string) {
+    const { data } = await api.patch(`/admin/agents/${id}/reject`, { notes })
+    return data
+  }
+
+  // Suspender Agente
+  async suspendAgent(id: number, notes?: string) {
+    const { data } = await api.patch(`/admin/agents/${id}/suspend`, { notes })
+    return data
+  }
+
+  // Reativar Agente
+  async reactivateAgent(id: number) {
+    const { data } = await api.patch(`/admin/agents/${id}/reactivate`)
+    return data
+  }
+
   /* =====================================================
      NOVOS MÉTODOS ADICIONADOS PARA REPLICAR OS SUB-AGENTES
   ===================================================== */

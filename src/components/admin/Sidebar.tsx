@@ -10,7 +10,8 @@ import {
   FileText,
   Building2,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  Server // <- Ícone importado para a AKI
 } from "lucide-react"
 
 const sectionTitle =
@@ -91,6 +92,11 @@ export default function Sidebar() {
 
           <SidebarLink to="/admin/partners">
             Parceiros
+          </SidebarLink>
+
+          {/* NOVO LINK AKI / OPERADORA */}
+          <SidebarLink to="/admin/aki" icon={<Server size={18} />}>
+            Conta 5Linhas
           </SidebarLink>
 
           {/* COMPLIANCE */}

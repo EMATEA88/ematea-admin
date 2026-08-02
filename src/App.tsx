@@ -21,6 +21,7 @@ import AdminKYCPage from "./pages/admin/kyc/AdminKYCPage"
 import AdminLogin from "./pages/admin/Login"
 import Agents from "./pages/admin/Agents"
 import SubAgents from "./pages/admin/SubAgents"
+import AkiDashboardPage from "./pages/admin/AkiAccountPage" // <--- Atualizado para o gestor de abas
 
 export default function App() {
   return (
@@ -78,6 +79,9 @@ export default function App() {
           <Route path="kyc" element={<AdminKYCPage />} />
           <Route path="agents" element={<Agents />} />
           <Route path="subagents" element={<SubAgents />} />
+          
+          {/* CONTA 5LINHAS / AKI (Corrigido para caminho relativo) */}
+          <Route path="aki" element={<AkiDashboardPage />} />
 
           {/* SERVICES */}
           <Route path="services" element={<AdminServiceRequests />} />

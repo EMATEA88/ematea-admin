@@ -16,12 +16,6 @@ export interface AdminLogItem {
 
 export const AdminService = {
 
-  // ================= DASHBOARD =================
-  dashboard: async () => {
-    const { data } = await api.get("/admin/dashboard")
-    return data
-  },
-
   // ================= LOGS =================
   logs: async (
     page = 1,
@@ -194,35 +188,6 @@ export const AdminService = {
       "/admin/withdrawals/export",
       { params: { status } }
     )
-    return data
-  },
-
-    // ================= SERVICE REQUESTS =================
-
-  getServiceRequests: async (
-    page = 1,
-    limit = 20,
-    status?: "IN_PROGRESS" | "COMPLETED" | "REJECTED"
-  ) => {
-    const params: any = { page, limit }
-
-    if (status) {
-      params.status = status
-    }
-
-    const { data } = await api.get(
-      "/admin/service-requests",
-      { params }
-    )
-
-    return data
-  },
-
-  completeService: async (id: number) => {
-    const { data } = await api.patch(
-      `/admin/service-requests/${id}/complete`
-    )
-
     return data
   },
 

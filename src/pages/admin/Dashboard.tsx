@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react"
-import { AdminService } from "../../services/admin.service"
+// Importe o serviço correto do dashboard unificado que aponta para /admin/dashboard
+import { adminDashboardService } from "../../services/adminDashboard.service"
 import { 
   Users, 
   ArrowUpRight, 
@@ -7,15 +8,41 @@ import {
   Wallet, 
   ChartLineUp, 
   ShieldCheck,
-  Circle
+  Circle,
+  ShoppingCart,
+  Stack
 } from "@phosphor-icons/react"
 
 type DashboardData = {
   totalUsers: number
+  totalBalance: number
   totalRecharges: number
   totalWithdrawals: number
-  totalBalance: number
   totalInvested?: number
+  totalFrozenBalance?: number
+  pendingWithdrawals?: number
+  netFlow?: number
+  
+  purchases?: {
+    total: number
+    pending: number
+    completed: number
+    rejected: number
+    today: number
+    month: number
+  }
+  services?: {
+    services: number
+    providers: number
+    groups: number
+    plans: number
+  }
+  commissions?: {
+    pending: number
+    paid: number
+    cancelled: number
+    totalAmount: any
+  }
   companyWallet?: {
     address: string
     bnb: string
@@ -30,8 +57,9 @@ export default function AdminDashboard() {
   const load = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await AdminService.dashboard()
-      setData(res)
+      // Utiliza o método correto do novo serviço unificado
+      const res = await adminDashboardService.getOverview() 
+setData((res as any)?.data ?? res)
     } catch (err) {
       console.error("Dashboard error", err)
     } finally {
@@ -51,10 +79,10 @@ export default function AdminDashboard() {
       {/* HEADER INSTITUCIONAL */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Financial Intelligence</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Financial Intelligence & Dashboard</h1>
           <p className="text-gray-500 text-sm mt-1 flex items-center gap-2">
             <ShieldCheck size={16} className="text-emerald-500" />
-            Monitoramento em tempo real dos ativos da plataforma
+            Painel unificado de monitoramento de ativos, utilizadores e operações
           </p>
         </div>
         <div className="flex items-center gap-3 bg-[#161A1F] px-4 py-2 rounded-xl border border-white/5 shadow-sm">
@@ -65,14 +93,14 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* COLUNA ESQUERDA: KPIs PRINCIPAIS (8/12) */}
+        {/* COLUNA ESQUERDA: KPIS PRINCIPAIS (8/12) */}
         <div className="lg:col-span-8 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <KpiCard
               title="Total de Clientes"
               value={data?.totalUsers || 0}
               icon={<Users size={24} />}
-              trend="+12% este mês"
+              trend="Ativos na plataforma"
               color="blue"
             />
             <KpiCard
@@ -96,18 +124,47 @@ export default function AdminDashboard() {
               icon={<ArrowDownLeft className="text-red-500" />}
             />
             <StatBox 
-              label="Volume Investido" 
+              label="Serviços em Curso" 
               value={data?.totalInvested || 0} 
               icon={<Wallet className="text-purple-500" />}
             />
           </div>
+
+          {/* SEÇÃO EXTRA: COMPRAS E COMISSÕES UNIFICADAS */}
+          {data?.purchases && (
+            <div className="bg-[#161A1F] border border-white/5 p-6 rounded-[2rem] space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <ShoppingCart size={20} className="text-blue-400" />
+                </div>
+                <h3 className="font-bold text-sm uppercase tracking-widest text-gray-300">Resumo de Transações e Compras</h3>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+                <div className="bg-black/30 p-4 rounded-xl border border-white/5">
+                  <p className="text-[10px] text-gray-500 uppercase font-bold">Total de Compras</p>
+                  <p className="text-lg font-bold mt-1 text-white">{data.purchases.total}</p>
+                </div>
+                <div className="bg-black/30 p-4 rounded-xl border border-white/5">
+                  <p className="text-[10px] text-yellow-500 uppercase font-bold">Pendentes</p>
+                  <p className="text-lg font-bold mt-1 text-yellow-400">{data.purchases.pending}</p>
+                </div>
+                <div className="bg-black/30 p-4 rounded-xl border border-white/5">
+                  <p className="text-[10px] text-emerald-500 uppercase font-bold">Concluídas</p>
+                  <p className="text-lg font-bold mt-1 text-emerald-400">{data.purchases.completed}</p>
+                </div>
+                <div className="bg-black/30 p-4 rounded-xl border border-white/5">
+                  <p className="text-[10px] text-blue-500 uppercase font-bold">Hoje</p>
+                  <p className="text-lg font-bold mt-1 text-blue-400">{data.purchases.today}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* COLUNA DIREITA: WALLET DA EMPRESA (4/12) - SEM IMAGENS QUEBRADAS */}
-        <div className="lg:col-span-4">
+        {/* COLUNA DIREITA: WALLET DA EMPRESA (4/12) */}
+        <div className="lg:col-span-4 space-y-6">
           {data?.companyWallet && (
             <div className="bg-gradient-to-br from-[#161A1F] to-[#0B0E11] p-6 rounded-[2rem] border border-white/10 shadow-2xl relative overflow-hidden group">
-              {/* Background Decorativo */}
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                 <Wallet size={120} weight="fill" />
               </div>
@@ -121,45 +178,69 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="bg-black/40 p-4 rounded-xl border border-white/5 mb-6">
-                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Endereço BSC (BEP20)</p>
+                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Status / Info</p>
                   <p className="text-[11px] font-mono text-gray-300 break-all leading-relaxed">
                     {data.companyWallet.address}
                   </p>
                 </div>
 
                 <div className="space-y-4">
-                  {/* BNB Card Estilizado */}
                   <div className="flex justify-between items-center p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/20">
-                        <span className="text-[10px] font-black text-yellow-500">BNB</span>
+                        <span className="text-[10px] font-black text-yellow-500">BAL</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-white">BNB (Gas)</span>
-                        <span className="text-[9px] text-gray-500 uppercase font-bold tracking-tighter">Taxas de Rede</span>
+                        <span className="text-sm font-bold text-white">Saldo Disponível</span>
+                        <span className="text-[9px] text-gray-500 uppercase font-bold tracking-tighter">Corrente</span>
                       </div>
                     </div>
                     <span className="text-sm font-bold text-yellow-500">{data.companyWallet.bnb}</span>
                   </div>
 
-                  {/* USDT Card Estilizado */}
                   <div className="flex justify-between items-center p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20">
-                        <span className="text-[10px] font-black text-emerald-500">USDT</span>
+                        <span className="text-[10px] font-black text-emerald-500">REV</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-white">USDT Liquidez</span>
-                        <span className="text-[9px] text-gray-500 uppercase font-bold tracking-tighter">Fundo Estável</span>
+                        <span className="text-sm font-bold text-white">Receita Total</span>
+                        <span className="text-[9px] text-gray-500 uppercase font-bold tracking-tighter">Acumulado</span>
                       </div>
                     </div>
                     <span className="text-sm font-bold text-emerald-500">{data.companyWallet.usdt}</span>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
 
-                <p className="mt-8 text-[10px] text-gray-600 text-center uppercase font-bold tracking-[0.2em] leading-relaxed opacity-60">
-                  Monitore o saldo de BNB para <br /> evitar falhas em transações
-                </p>
+          {/* CATALOGO RESUMIDO SE DISPONÍVEL */}
+          {data?.services && (
+            <div className="bg-[#161A1F] border border-white/5 p-6 rounded-[2rem] space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <Stack size={20} className="text-purple-400" />
+                </div>
+                <h3 className="font-bold text-sm uppercase tracking-widest text-gray-300">Catálogo & Infraestrutura</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex justify-between">
+                  <span className="text-gray-500">Serviços:</span>
+                  <span className="font-bold text-white">{data.services.services}</span>
+                </div>
+                <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex justify-between">
+                  <span className="text-gray-500">Planos:</span>
+                  <span className="font-bold text-white">{data.services.plans}</span>
+                </div>
+                <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex justify-between">
+                  <span className="text-gray-500">Parceiros:</span>
+                  <span className="font-bold text-white">{data.services.providers}</span>
+                </div>
+                <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex justify-between">
+                  <span className="text-gray-500">Grupos:</span>
+                  <span className="font-bold text-white">{data.services.groups}</span>
+                </div>
               </div>
             </div>
           )}
@@ -182,12 +263,12 @@ function KpiCard({ title, value, money, icon, color, trend }: any) {
     <div className="bg-[#161A1F] border border-white/5 p-8 rounded-[2rem] hover:border-white/10 transition-all group">
       <div className="flex justify-between items-start">
         <div className={`p-3 rounded-2xl ${colors[color]}`}>{icon}</div>
-        <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-md">{trend}</span>
+        {trend && <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-md">{trend}</span>}
       </div>
       <div className="mt-6">
         <p className="text-gray-500 text-xs uppercase font-bold tracking-widest">{title}</p>
         <h2 className="text-4xl font-bold mt-2 tracking-tight">
-          {money ? formatMoney(value) : value.toLocaleString()}
+          {money ? formatMoney(value) : (value?.toLocaleString() || 0)}
         </h2>
       </div>
     </div>

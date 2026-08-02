@@ -10,7 +10,8 @@ import {
   Ban,
   Plus,
   Pencil,
-  Key
+  Key,
+  RotateCw
 } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -26,7 +27,9 @@ export default function Agents() {
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState<Status | undefined>()
   const [search, setSearch] = useState("")
-  const [agents, setAgents] = useState<Agent[]>([])
+  
+  const [allAgents, setAllAgents] = useState<Agent[]>([])      // <-- Guarda todos os dados crus da API
+  const [agents, setAgents] = useState<Agent[]>([])             // <-- Dados filtrados para exibição
   
   // Estados de controlo dos Modais
   const [openCreateModal, setOpenCreateModal] = useState(false)
@@ -35,29 +38,13 @@ export default function Agents() {
   const [openEditModal, setOpenEditModal] = useState(false)
   const [openPinModal, setOpenPinModal] = useState(false)
 
+  // 1. Carrega os dados brutos da API apenas uma vez ou ao atualizar
   async function loadAgents() {
     try {
       setLoading(true)
-      // Consome o serviço dedicado que foi criado
       const response = await AdminAgentService.getAll()
-      
-      // Filtros em memória aplicados dinamicamente com base na seleção
-      let filtered = Array.isArray(response) ? response : []
-
-      if (status) {
-        filtered = filtered.filter(a => a.status === status)
-      }
-
-      if (search.trim()) {
-        const query = search.toLowerCase()
-        filtered = filtered.filter(a => 
-          a.user?.fullName?.toLowerCase().includes(query) ||
-          a.agentCode?.toLowerCase().includes(query) ||
-          a.user?.email?.toLowerCase().includes(query)
-        )
-      }
-
-      setAgents(filtered)
+      const dataList = Array.isArray(response) ? response : []
+      setAllAgents(dataList)
     } catch {
       toast.error("Erro ao carregar lista de agentes.")
     } finally {
@@ -65,15 +52,31 @@ export default function Agents() {
     }
   }
 
+  // 2. Sempre que mudar o estado (abas), a pesquisa ou a lista bruta, filtramos localmente sem perder dados
   useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      loadAgents()
-    }, 300)
+    let filtered = [...allAgents]
 
-    return () => clearTimeout(delayDebounce)
-  }, [status, search])
+    if (status) {
+      filtered = filtered.filter(a => a.status === status)
+    }
 
-  // Ação atómica de alternar bloqueio (Bloquear/Desbloquear)
+    if (search.trim()) {
+      const query = search.toLowerCase()
+      filtered = filtered.filter(a => 
+        a.user?.fullName?.toLowerCase().includes(query) ||
+        a.agentCode?.toLowerCase().includes(query) ||
+        a.user?.email?.toLowerCase().includes(query)
+      )
+    }
+
+    setAgents(filtered)
+  }, [status, search, allAgents])
+
+  useEffect(() => {
+    loadAgents()
+  }, [])
+
+  // Ação de Alternar Bloqueio
   async function handleToggleBlock(id: number) {
     try {
       await AdminAgentService.toggleBlock(id)
@@ -81,6 +84,28 @@ export default function Agents() {
       loadAgents()
     } catch {
       toast.error("Erro ao alterar estado da conta.")
+    }
+  }
+
+  // Ação de Aprovar Agente Pendente
+  async function handleApprove(id: number) {
+    try {
+      await AdminAgentService.approveAgent(id)
+      toast.success("Agente aprovado com sucesso!")
+      loadAgents()
+    } catch {
+      toast.error("Erro ao aprovar agente.")
+    }
+  }
+
+  // Ação de Rejeitar Agente Pendente
+  async function handleReject(id: number) {
+    try {
+      await AdminAgentService.rejectAgent(id)
+      toast.success("Agente rejeitado.")
+      loadAgents()
+    } catch {
+      toast.error("Erro ao rejeitar agente.")
     }
   }
 
@@ -98,13 +123,25 @@ export default function Agents() {
           </p>
         </div>
 
-        <button
-          onClick={() => setOpenCreateModal(true)}
-          className="flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.15)] active:scale-[0.98] self-start sm:self-auto"
-        >
-          <Plus size={14} strokeWidth={3} />
-          Novo Agente
-        </button>
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          {/* BOTÃO DE ATUALIZAR */}
+          <button
+            onClick={loadAgents}
+            disabled={loading}
+            title="Atualizar Lista"
+            className="flex items-center justify-center bg-[#161A1E] hover:bg-white/[0.06] text-gray-300 border border-white/[0.04] p-3 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50"
+          >
+            <RotateCw size={15} className={`transition-transform duration-500 ${loading ? "animate-spin" : ""}`} />
+          </button>
+
+          <button
+            onClick={() => setOpenCreateModal(true)}
+            className="flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.15)] active:scale-[0.98]"
+          >
+            <Plus size={14} strokeWidth={3} />
+            Novo Agente
+          </button>
+        </div>
       </div>
 
       {/* ================= FILTERS & CONTROLS ================= */}
@@ -154,7 +191,7 @@ export default function Agents() {
             </thead>
 
             <tbody className="text-xs font-medium divide-y divide-white/[0.02]">
-              {loading && (
+              {loading && allAgents.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-16 text-center text-gray-500 font-mono text-[11px] uppercase tracking-wider">
                     Carregando registros de agentes...
@@ -170,7 +207,7 @@ export default function Agents() {
                 </tr>
               )}
 
-              {!loading && agents.map(agent => (
+              {agents.map(agent => (
                 <tr key={agent.id} className="hover:bg-white/[0.01] transition-colors group">
                   
                   {/* COMPONENTE NOME */}
@@ -196,27 +233,46 @@ export default function Agents() {
                     <div className="text-[10px] text-gray-500">{agent.user?.email || "-"}</div>
                   </td>
 
-                  {/* SALDO DE COMISSÃO / PRINCIPAL */}
+                  {/* SALDO PRINCIPAL */}
                   <td className="px-4 py-4 font-mono text-white font-bold">
                     {(agent.user?.balance || 0).toLocaleString("pt-AO", { minimumFractionDigits: 2 })} Kz
                   </td>
 
                   {/* BADGE DE ESTADO */}
                   <td className="px-4 py-4 text-center">
-                    <span className={`inline-flex text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
-                      agent.user?.isBlocked 
-                        ? "bg-rose-500/10 text-rose-400 border-rose-500/20" 
-                        : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                    <span className={`inline-flex text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded border ${
+                      agent.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                      agent.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                      agent.status === 'REJECTED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                      'bg-purple-500/10 text-purple-400 border-purple-500/20'
                     }`}>
-                      {agent.user?.isBlocked ? "BLOQUEADO" : "ATIVO"}
+                      {agent.status}
                     </span>
                   </td>
 
-                  {/* GRID DE MICRO-AÇÕES EXATAMENTE IGUAL AO DOS SUB-AGENTES */}
+                  {/* GRID DE MICRO-AÇÕES */}
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-1.5">
                       
-                      {/* Ação 1: Visualizar */}
+                      {agent.status === "PENDING" && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(agent.id)}
+                            title="Aprovar Agente"
+                            className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all"
+                          >
+                            <CheckCircle size={13} />
+                          </button>
+                          <button
+                            onClick={() => handleReject(agent.id)}
+                            title="Rejeitar Agente"
+                            className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-black transition-all"
+                          >
+                            <XCircle size={13} />
+                          </button>
+                        </>
+                      )}
+
                       <button
                         onClick={() => {
                           setSelectedAgent(agent)
@@ -228,7 +284,6 @@ export default function Agents() {
                         <Eye size={13} />
                       </button>
 
-                      {/* Ação 2: Editar */}
                       <button
                         onClick={() => {
                           setSelectedAgent(agent)
@@ -240,7 +295,6 @@ export default function Agents() {
                         <Pencil size={13} />
                       </button>
 
-                      {/* Ação 3: Alternar Bloqueio */}
                       <button
                         onClick={() => handleToggleBlock(agent.id)}
                         title={agent.user?.isBlocked ? "Desbloquear Conta" : "Bloquear Conta"}
@@ -253,7 +307,6 @@ export default function Agents() {
                         <Ban size={13} />
                       </button>
 
-                      {/* Ação 4: Resetar PIN */}
                       <button
                         onClick={() => {
                           setSelectedAgent(agent)
@@ -275,14 +328,13 @@ export default function Agents() {
         </div>
       </div>
 
-      {/* ================= MODAL DE CRIAÇÃO ================= */}
+      {/* ================= MODAIS ================= */}
       <CreateAgentModal 
         open={openCreateModal}
         onClose={() => setOpenCreateModal(false)}
         onSuccess={loadAgents}
       />
 
-      {/* ================= MODAIS DE MICRO-AÇÕES OPERACIONAIS ================= */}
       <AgentDetailsModal 
         agent={selectedAgent}
         isOpen={openDetailsModal}

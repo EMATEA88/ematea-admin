@@ -13,7 +13,8 @@ import {
   UserCircle2,
   Phone,
   Mail,
-  SlidersHorizontal
+  SlidersHorizontal,
+  RefreshCw
 } from "lucide-react"
 import CreateSubAgentModal from "../../components/admin/subagents/CreateSubAgentModal"
 import SubAgentDetailsModal from "../../components/admin/subagents/SubAgentDetailsModal"
@@ -29,6 +30,7 @@ type SubAgentType = "ALL" | "INTERNAL" | "AGENT_FIELD"
 export default function SubAgentsManager() {
   // ================= STATES =================
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [search, setSearch] = useState("")
   const [activeType, setActiveType] = useState<SubAgentType>("ALL")
   const [subAgents, setSubAgents] = useState<SubAgent[]>([])
@@ -40,15 +42,23 @@ export default function SubAgentsManager() {
   const [showResetPin, setShowResetPin] = useState(false)
 
   // ================= LOAD DATA =================
-  async function load() {
+  async function load(isRefresh = false) {
     try {
-      setLoading(true)
+      if (isRefresh) {
+        setRefreshing(true)
+      } else {
+        setLoading(true)
+      }
       const data = await AdminSubAgentService.getAll()
       setSubAgents(data || [])
+      if (isRefresh) {
+        toast.success("Lista de sub-agentes atualizada.")
+      }
     } catch {
       toast.error("Erro ao carregar Sub-Agentes.")
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
@@ -161,13 +171,25 @@ export default function SubAgentsManager() {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.15)] active:scale-[0.98]"
-        >
-          <UserPlus size={15} />
-          Novo Sub-Agente
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => load(true)}
+            disabled={refreshing}
+            className="flex items-center justify-center gap-2 bg-[#161A1E] hover:bg-[#1f242b] border border-white/[0.06] text-gray-300 font-black text-xs uppercase tracking-widest px-4 py-3 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50"
+            title="Atualizar Lista"
+          >
+            <RefreshCw size={15} className={refreshing ? "animate-spin text-cyan-400" : ""} />
+            <span className="hidden sm:inline">Atualizar</span>
+          </button>
+
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.15)] active:scale-[0.98]"
+          >
+            <UserPlus size={15} />
+            Novo Sub-Agente
+          </button>
+        </div>
       </div>
 
       {/* ================= STATISTICS GRID ================= */}

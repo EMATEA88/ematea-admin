@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import DataTable from "../../components/admin/DataTable"
-import { AdminService } from "../../services/admin.service"
+import { AdminCommissionService } from "../../services/admin-commission.service"
 
 interface Commission {
   id: number
@@ -14,9 +14,18 @@ interface Commission {
   }
 }
 
-export default function AdminCommissions() {
+interface DashboardData {
+  today: { sales: number; profit: number; commission: number }
+  week: { sales: number; profit: number; commission: number }
+  month: { sales: number; profit: number; commission: number }
+  year: { sales: number; profit: number; commission: number }
+  overview: { totalSales: number; totalProfit: number; totalCommission: number }
+  commissions: { pending: number; paid: number; cancelled: number }
+}
 
+export default function AdminCommissions() {
   const [items, setItems] = useState<Commission[]>([])
+  const [stats, setStats] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
 
@@ -27,16 +36,21 @@ export default function AdminCommissions() {
   async function load() {
     try {
       setLoading(true)
+      
+      // Carrega o histórico e o dashboard em paralelo
+      const [historyRes, dashboardRes] = await Promise.all([
+        AdminCommissionService.getCommissions(),
+        AdminCommissionService.getDashboard()
+      ])
 
-      const res = await AdminService.commissions()
-
-      const list = Array.isArray(res)
-        ? res
-        : res?.items ?? []
+      const list = Array.isArray(historyRes)
+        ? historyRes
+        : historyRes?.items ?? historyRes?.data ?? []
 
       setItems(list)
-
-    } catch {
+      setStats(dashboardRes)
+    } catch (error) {
+      console.error("Erro ao carregar comissões:", error)
       toast.error("Erro ao carregar comissões")
     } finally {
       setLoading(false)
@@ -45,9 +59,7 @@ export default function AdminCommissions() {
 
   const filtered = items.filter((c) => {
     if (!search) return true
-
     const s = search.toLowerCase()
-
     return (
       String(c.id).includes(s) ||
       String(c.user?.phone || "").toLowerCase().includes(s) ||
@@ -74,11 +86,32 @@ export default function AdminCommissions() {
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">
-          Comissões
+          Comissões de Agentes e Sub-agentes
         </h1>
-
         <div className="text-lg font-semibold text-emerald-400">
           {formatMoney(total)}
+        </div>
+      </div>
+
+      {/* BLOCOS DE ESTATÍSTICAS (Pendente, Paga, Cancelada) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gray-950 border border-gray-800 p-6 rounded-2xl">
+          <span className="text-gray-400 text-sm">Pendentes</span>
+          <div className="text-2xl font-bold text-yellow-400 mt-2">
+            {stats?.commissions?.pending ?? 0}
+          </div>
+        </div>
+        <div className="bg-gray-950 border border-gray-800 p-6 rounded-2xl">
+          <span className="text-gray-400 text-sm">Pagas</span>
+          <div className="text-2xl font-bold text-emerald-400 mt-2">
+            {stats?.commissions?.paid ?? 0}
+          </div>
+        </div>
+        <div className="bg-gray-950 border border-gray-800 p-6 rounded-2xl">
+          <span className="text-gray-400 text-sm">Canceladas</span>
+          <div className="text-2xl font-bold text-red-400 mt-2">
+            {stats?.commissions?.cancelled ?? 0}
+          </div>
         </div>
       </div>
 
@@ -115,28 +148,24 @@ export default function AdminCommissions() {
           data={filtered}
           columns={[
             { key: "id", label: "ID" },
-
             {
               key: "user",
               label: "Telefone",
               render: (row: Commission) =>
                 row.user?.phone || "-",
             },
-
             {
               key: "level",
               label: "Nível",
               render: (row: Commission) =>
                 <LevelBadge level={row.level} />
             },
-
             {
               key: "type",
               label: "Tipo",
               render: (row: Commission) =>
                 <TypeBadge type={row.type} />
             },
-
             {
               key: "amount",
               label: "Valor",
@@ -145,7 +174,6 @@ export default function AdminCommissions() {
                   {formatMoney(row.amount)}
                 </span>,
             },
-
             {
               key: "createdAt",
               label: "Data",
@@ -164,7 +192,6 @@ export default function AdminCommissions() {
 /* ================= BADGES ================= */
 
 function TypeBadge({ type }: { type: string }) {
-
   const styles: Record<string, string> = {
     RECHARGE: "bg-emerald-600/20 text-emerald-400",
   }
@@ -177,7 +204,6 @@ function TypeBadge({ type }: { type: string }) {
 }
 
 function LevelBadge({ level }: { level: number }) {
-
   const colors: Record<number, string> = {
     1: "bg-blue-600/20 text-blue-400",
     2: "bg-indigo-600/20 text-indigo-400",
