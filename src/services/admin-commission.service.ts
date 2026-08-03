@@ -1,33 +1,45 @@
-import { api } from "./api"
+import { api } from "./api";
 
 export const AdminCommissionService = {
-  getCommissions: async (params?: { page?: number; limit?: number; status?: string }) => {
-    const { data } = await api.get("/admin/commissions/history", { params })
-    return data
-  },
-  
-  getDashboard: async () => {
-    const { data } = await api.get("/admin/commissions/dashboard")
-    return data
+
+  async getDashboard() {
+    const { data } = await api.get(
+      "/admin/commissions/dashboard"
+    );
+
+    return data.data;
   },
 
-  getTopAgents: async () => {
-    const { data } = await api.get("/admin/commissions/top-agents")
-    return data
+  async getHistory() {
+    const { data } = await api.get(
+      "/admin/commissions/history"
+    );
+
+    return data.data;
   },
 
-  getTopSubAgents: async () => {
-    const { data } = await api.get("/admin/commissions/top-subagents")
-    return data
+  async getTopAgents() {
+    const { data } = await api.get(
+      "/admin/commissions/top-agents"
+    );
+
+    return data.data;
   },
 
-  getHistory: async () => {
-    const { data } = await api.get("/admin/commissions/history")
-    return data
+  async getTopSubAgents() {
+    const { data } = await api.get(
+      "/admin/commissions/top-subagents"
+    );
+
+    return data.data;
   },
 
-  getCharts: async () => {
-    const { data } = await api.get("/admin/commissions/charts")
-    return data
+  async getCharts() {
+    const { data } = await api.get(
+      "/admin/commissions/charts"
+    );
+
+    return data.data;
   }
-}
+
+};

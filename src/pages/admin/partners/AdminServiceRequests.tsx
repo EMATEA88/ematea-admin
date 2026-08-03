@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { adminServiceRequestsService, type ServiceRequest } from "../../../services/adminServiceRequests.service"
 import toast from "react-hot-toast"
 import { RefreshCw } from "lucide-react"
@@ -149,11 +149,11 @@ function StatusBadge({ status }: { status: "IN_PROGRESS" | "COMPLETED" | "REJECT
   )
 }
 
-function Th({ children }: any) {
+function Th({ children }: { children: ReactNode }) {
   return <th className="px-6 py-4 text-left font-medium">{children}</th>
 }
 
-function Td({ children, className = "" }: any) {
+function Td({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <td className={`px-6 py-4 ${className}`}>{children}</td>
 }
 
