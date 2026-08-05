@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Plus, Edit, Trash2, X, Save } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { Plus, Pencil, Trash, X, FloppyDisk, Bank as BankIcon, ShieldCheck, ArrowsClockwise } from '@phosphor-icons/react'
 import toast from 'react-hot-toast'
 import { AdminService } from '../../services/admin.service'
 
@@ -12,7 +12,6 @@ interface Bank {
 }
 
 export default function Banks() {
-
   const [banks, setBanks] = useState<Bank[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -26,7 +25,7 @@ export default function Banks() {
 
   // ================= LOAD =================
 
-  async function loadBanks() {
+  const loadBanks = useCallback(async () => {
     try {
       setLoading(true)
       const data = await AdminService.banks()
@@ -36,11 +35,11 @@ export default function Banks() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     loadBanks()
-  }, [])
+  }, [loadBanks])
 
   // ================= FORM =================
 
@@ -56,6 +55,7 @@ export default function Banks() {
       bank: bank.bank,
       iban: bank.iban,
     })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -79,7 +79,6 @@ export default function Banks() {
 
       resetForm()
       await loadBanks()
-
     } catch (err: any) {
       toast.error(
         err?.response?.data?.message || 'Erro ao salvar banco'
@@ -101,105 +100,87 @@ export default function Banks() {
     }
   }
 
-  // ================= UI =================
-
   return (
-    <div className="p-8 space-y-8 text-white">
-
+    <div className="p-10 bg-[#0B0E11] min-h-screen text-white space-y-10 max-w-[1600px] mx-auto">
+      
       {/* HEADER */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Gestão de Bancos
-        </h1>
-        <p className="text-sm text-gray-400">
-          Contas bancárias usadas em depósitos e levantamentos
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/5 pb-8">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Gestão Financeira & Operacional
+            </span>
+          </div>
+          <h1 className="text-3xl font-black tracking-tight uppercase text-white">
+            Gestão de Bancos
+          </h1>
+          <p className="text-gray-400 text-sm flex items-center gap-2">
+            <ShieldCheck size={16} className="text-emerald-500" />
+            Contas bancárias oficiais configuradas para depósitos e levantamentos na plataforma.
+          </p>
+        </div>
+
+        <button 
+          onClick={loadBanks}
+          className="flex items-center gap-2 bg-[#161A1F] hover:bg-[#1C2128] text-white px-5 py-3 rounded-2xl border border-white/5 transition-all shadow-xl font-bold text-xs uppercase tracking-wider"
+        >
+          <ArrowsClockwise size={16} className={`text-blue-400 ${loading ? "animate-spin" : ""}`} />
+          Atualizar Dados
+        </button>
       </div>
 
       {/* FORM CARD */}
-      <div className="
-        bg-gray-950
-        border border-gray-800
-        rounded-2xl
-        shadow-xl
-        p-6
-      ">
-        <h2 className="text-lg font-semibold mb-6">
-          {editingId ? 'Editar Banco' : 'Adicionar Banco'}
-        </h2>
+      <div className="bg-[#161A1F] border border-white/5 rounded-[2rem] p-8 shadow-xl space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-black uppercase tracking-wider text-white">
+              {editingId ? 'Editar Conta Bancária' : 'Adicionar Nova Conta Bancária'}
+            </h2>
+            <p className="text-xs text-gray-500">Preencha os dados rigorosamente para evitar falhas em transações</p>
+          </div>
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+            <BankIcon size={20} className="text-emerald-400" />
+          </div>
+        </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4"
-        >
-          <input
-            className="
-              bg-gray-900
-              border border-gray-700
-              px-4 py-2
-              rounded-lg
-              text-white
-              focus:outline-none
-              focus:border-emerald-500
-            "
-            placeholder="Nome do Titular"
-            value={form.name}
-            onChange={(e) =>
-              setForm({ ...form, name: e.target.value })
-            }
-          />
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Nome do Titular</label>
+            <input
+              className="w-full bg-[#0B0E11] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition"
+              placeholder="Ex: Empresa Lda / Nome Completo"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </div>
 
-          <input
-            className="
-              bg-gray-900
-              border border-gray-700
-              px-4 py-2
-              rounded-lg
-              text-white
-              focus:outline-none
-              focus:border-emerald-500
-            "
-            placeholder="Banco (ex: BAI, BFA)"
-            value={form.bank}
-            onChange={(e) =>
-              setForm({ ...form, bank: e.target.value })
-            }
-          />
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Instituição Bancária</label>
+            <input
+              className="w-full bg-[#0B0E11] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition"
+              placeholder="Ex: BAI, BFA, BIC..."
+              value={form.bank}
+              onChange={(e) => setForm({ ...form, bank: e.target.value })}
+            />
+          </div>
 
-          <input
-            className="
-              bg-gray-900
-              border border-gray-700
-              px-4 py-2
-              rounded-lg
-              text-white
-              focus:outline-none
-              focus:border-emerald-500
-            "
-            placeholder="IBAN"
-            value={form.iban}
-            onChange={(e) =>
-              setForm({ ...form, iban: e.target.value })
-            }
-          />
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Número de IBAN</label>
+            <input
+              className="w-full bg-[#0B0E11] border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition font-mono"
+              placeholder="AO06..."
+              value={form.iban}
+              onChange={(e) => setForm({ ...form, iban: e.target.value })}
+            />
+          </div>
 
-          <div className="md:col-span-3 flex gap-3 pt-4">
-
+          <div className="md:col-span-3 flex items-center gap-3 pt-2">
             <button
               type="submit"
               disabled={submitting}
-              className="
-                flex items-center gap-2
-                rounded-lg
-                bg-emerald-600
-                px-5 py-2.5
-                text-white
-                hover:bg-emerald-700
-                disabled:opacity-60
-                transition
-              "
+              className="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 shadow-lg"
             >
-              {editingId ? <Save size={16} /> : <Plus size={16} />}
+              {editingId ? <FloppyDisk size={16} /> : <Plus size={16} />}
               {editingId ? 'Salvar Alterações' : 'Adicionar Banco'}
             </button>
 
@@ -207,115 +188,105 @@ export default function Banks() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="
-                  flex items-center gap-2
-                  rounded-lg
-                  border border-gray-700
-                  px-5 py-2.5
-                  text-gray-300
-                  hover:bg-gray-800
-                  transition
-                "
+                className="flex items-center gap-2 bg-[#0B0E11] hover:bg-white/5 text-gray-300 border border-white/5 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all"
               >
                 <X size={16} />
                 Cancelar
               </button>
             )}
-
           </div>
         </form>
       </div>
 
       {/* TABLE CARD */}
-      <div className="
-        bg-gray-950
-        border border-gray-800
-        rounded-2xl
-        shadow-xl
-        overflow-hidden
-      ">
-
-        {loading ? (
-          <div className="p-8 text-gray-400">
-            A carregar bancos…
+      <div className="bg-[#161A1F] border border-white/5 rounded-[2rem] p-6 space-y-6 shadow-xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-black text-sm uppercase tracking-wider text-white">Bancos Cadastrados</h3>
+            <p className="text-xs text-gray-500">Lista ativa disponível para processamento</p>
           </div>
-        ) : banks.length === 0 ? (
-          <div className="p-8 text-gray-500">
-            Nenhum banco cadastrado
-          </div>
-        ) : (
-          <table className="w-full text-sm">
+          <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-white/5 text-gray-400 border border-white/5">
+            Total: {banks.length}
+          </span>
+        </div>
 
-            <thead className="bg-gray-900 text-gray-400 uppercase text-xs tracking-wider">
-              <tr>
-                <th className="px-6 py-4 text-left">Titular</th>
-                <th className="px-6 py-4 text-left">Banco</th>
-                <th className="px-6 py-4 text-left">IBAN</th>
-                <th className="px-6 py-4 text-right">Ações</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-white/5 text-[10px] uppercase font-black tracking-widest text-gray-500">
+                <th className="py-4 px-6">Titular</th>
+                <th className="py-4 px-6">Banco</th>
+                <th className="py-4 px-6">IBAN</th>
+                <th className="py-4 px-6 text-right">Ações</th>
               </tr>
             </thead>
-
-            <tbody>
-
-              {banks.map((bank) => (
-                <tr
-                  key={bank.id}
-                  className="
-                    border-t border-gray-800
-                    hover:bg-gray-800/40
-                    transition duration-200
-                  "
-                >
-                  <td className="px-6 py-4 font-semibold">
-                    {bank.name}
+            <tbody className="divide-y divide-white/5 text-xs">
+              {loading ? (
+                <>
+                  <SkeletonRow />
+                  <SkeletonRow />
+                  <SkeletonRow />
+                </>
+              ) : banks.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-12 text-center text-gray-500">
+                    Nenhum banco cadastrado no sistema.
                   </td>
-
-                  <td className="px-6 py-4 text-gray-300">
-                    {bank.bank}
-                  </td>
-
-                  <td className="px-6 py-4 font-mono text-gray-400">
-                    {bank.iban}
-                  </td>
-
-                  <td className="px-6 py-4 flex justify-end gap-4">
-
-                    <button
-                      onClick={() => handleEdit(bank)}
-                      className="
-                        text-emerald-400
-                        hover:text-emerald-300
-                        transition
-                      "
-                      title="Editar"
-                    >
-                      <Edit size={16} />
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(bank.id)}
-                      className="
-                        text-red-400
-                        hover:text-red-300
-                        transition
-                      "
-                      title="Eliminar"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-
-                  </td>
-
                 </tr>
-              ))}
+              ) : (
+                banks.map((bank) => (
+                  <tr key={bank.id} className="hover:bg-[#12161B] transition-colors">
+                    <td className="py-4 px-6 font-bold text-white">
+                      {bank.name}
+                    </td>
 
+                    <td className="py-4 px-6">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        {bank.bank}
+                      </span>
+                    </td>
+
+                    <td className="py-4 px-6 font-mono text-gray-400">
+                      {bank.iban}
+                    </td>
+
+                    <td className="py-4 px-6 flex justify-end gap-2">
+                      <button
+                        onClick={() => handleEdit(bank)}
+                        className="flex items-center gap-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-xl font-bold transition-all"
+                        title="Editar"
+                      >
+                        <Pencil size={14} />
+                        Editar
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(bank.id)}
+                        className="flex items-center gap-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-xl font-bold transition-all"
+                        title="Eliminar"
+                      >
+                        <Trash size={14} />
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
-
           </table>
-        )}
-
+        </div>
       </div>
-
     </div>
+  )
+}
+
+function SkeletonRow() {
+  return (
+    <tr className="animate-pulse">
+      <td className="py-4 px-6"><div className="h-4 bg-white/5 rounded w-36" /></td>
+      <td className="py-4 px-6"><div className="h-5 bg-white/5 rounded-full w-20" /></td>
+      <td className="py-4 px-6"><div className="h-4 bg-white/5 rounded w-64" /></td>
+      <td className="py-4 px-6 text-right"><div className="h-8 bg-white/5 rounded-xl w-32 ml-auto" /></td>
+    </tr>
   )
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react"
 import { adminServiceRequestsService, type ServiceRequest } from "../../../services/adminServiceRequests.service"
 import toast from "react-hot-toast"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, ClipboardList, Building2 } from "lucide-react"
 
 export default function AdminServiceRequests() {
   const [data, setData] = useState<ServiceRequest[]>([])
@@ -43,91 +43,123 @@ export default function AdminServiceRequests() {
   }, [])
 
   return (
-    <div className="p-10 space-y-6 max-w-7xl mx-auto text-gray-100">
+    <div className="p-10 bg-[#0B0E11] min-h-screen text-white space-y-10 max-w-[1600px] mx-auto font-sans">
       
       {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">
-            Service Requests
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/5 pb-8">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/25">
+              Gestão de Operações
+            </span>
+            <span className="text-gray-500 text-xs">•</span>
+            <span className="text-gray-400 text-xs font-mono">Service Requests</span>
+          </div>
+          <h1 className="text-3xl font-black tracking-tight uppercase text-white">
+            Solicitações de Serviço
           </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Gestão institucional de pedidos de serviço isolados
+          <p className="text-gray-400 text-sm flex items-center gap-2">
+            <ClipboardList size={16} className="text-blue-400" />
+            Gestão institucional de pedidos de serviço isolados e rastreio de parceiros.
           </p>
         </div>
+
         <button
           onClick={fetchData}
           disabled={loading}
-          className="flex items-center gap-2 bg-[#1A1F24] hover:bg-[#222831] text-gray-300 px-4 py-2 rounded-xl border border-[#1E2329] text-sm transition"
+          className="flex items-center gap-2 bg-[#161A1F] hover:bg-[#1C2128] text-white px-5 py-3 rounded-2xl border border-white/5 text-xs font-bold uppercase tracking-wider transition-all shadow-xl disabled:opacity-50 cursor-pointer"
         >
-          <RefreshCw size={16} className={loading ? "animate-spin text-yellow-400" : ""} />
-          Atualizar
+          <RefreshCw size={16} className={`text-blue-400 ${loading ? "animate-spin" : ""}`} />
+          Atualizar Dados
         </button>
       </div>
 
-      {/* TABLE */}
-      <div className="bg-[#14171A] border border-[#1E2329] rounded-2xl overflow-hidden shadow-xl">
-        <table className="w-full text-sm text-gray-300">
-          <thead className="bg-[#1A1F24] text-gray-400 border-b border-[#1E2329]">
-            <tr>
-              <Th>ID</Th>
-              <Th>Utilizador</Th>
-              <Th>Parceiro</Th>
-              <Th>Plano</Th>
-              <Th>Valor</Th>
-              <Th>Estado</Th>
-              <Th>Ações</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.length === 0 && !loading && (
+      {/* TABLE CONTAINER */}
+      <div className="bg-[#161A1F] border border-white/5 rounded-[2rem] overflow-hidden shadow-xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-gray-300">
+            <thead className="bg-[#0B0E11] text-gray-400 border-b border-white/5 text-xs uppercase tracking-wider font-black">
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                  Nenhum registro encontrado.
-                </td>
+                <Th>ID</Th>
+                <Th>Utilizador</Th>
+                <Th>Parceiro</Th>
+                <Th>Plano</Th>
+                <Th>Valor</Th>
+                <Th>Estado</Th>
+                <Th>Ações</Th>
               </tr>
-            )}
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {loading && data.length === 0 ? (
+                <>
+                  <SkeletonRow />
+                  <SkeletonRow />
+                  <SkeletonRow />
+                </>
+              ) : data.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-8 py-16 text-center text-gray-500">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <ClipboardList size={32} className="text-gray-600" />
+                      <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Nenhum registro encontrado.</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                data.map((r) => {
+                  // Resolve o parceiro com segurança sem gerar erros de tipagem do TS
+                  const planObj = r.plan as any;
+                  const partnerName = 
+                    planObj?.partner?.name ?? 
+                    planObj?.provider?.name ?? 
+                    (r as any).partner?.name ?? 
+                    (r as any).provider?.name ?? 
+                    "-";
 
-            {data.map((r) => (
-              <tr
-                key={r.id}
-                className="border-t border-[#1E2329] hover:bg-[#181C21] transition"
-              >
-                <Td className="text-[#FCD535] font-semibold">
-                  #{r.id}
-                </Td>
-                <Td>{r.user?.phone ?? "-"}</Td>
-                <Td>{r.plan?.partner?.name ?? "-"}</Td>
-                <Td className="font-medium text-white">
-                  {r.plan?.name ?? "-"}
-                </Td>
-                <Td className="text-gray-200 font-medium">
-                  {formatMoney(r.amount)}
-                </Td>
-                <Td>
-                  <StatusBadge status={r.status} />
-                </Td>
-                <Td>
-                  {r.status === "IN_PROGRESS" && (
-                    <button
-                      disabled={actionLoading === r.id}
-                      onClick={() => handleComplete(r.id)}
-                      className="bg-[#FCD535] text-black px-4 py-1.5 rounded-lg text-xs font-semibold hover:scale-105 transition disabled:opacity-50 shadow-md"
+                  return (
+                    <tr
+                      key={r.id}
+                      className="hover:bg-white/[0.02] transition"
                     >
-                      {actionLoading === r.id ? "Processando..." : "Concluir"}
-                    </button>
-                  )}
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {loading && data.length === 0 && (
-          <div className="p-12 text-center text-gray-500 animate-pulse">
-            Carregando solicitações...
-          </div>
-        )}
+                      <Td className="text-blue-400 font-mono font-bold">
+                        #{r.id}
+                      </Td>
+                      <Td>
+                        <span className="text-gray-200 font-medium">{r.user?.phone ?? "-"}</span>
+                      </Td>
+                      <Td>
+                        <div className="flex items-center gap-2">
+                          <Building2 size={14} className="text-gray-500 shrink-0" />
+                          <span className="text-gray-200 font-semibold">{partnerName}</span>
+                        </div>
+                      </Td>
+                      <Td className="font-bold text-white">
+                        {planObj?.name ?? "-"}
+                      </Td>
+                      <Td className="text-gray-200 font-bold font-mono">
+                        {formatMoney(r.amount)}
+                      </Td>
+                      <Td>
+                        <StatusBadge status={r.status} />
+                      </Td>
+                      <Td>
+                        {r.status === "IN_PROGRESS" && (
+                          <button
+                            disabled={actionLoading === r.id}
+                            onClick={() => handleComplete(r.id)}
+                            className="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 shadow-lg cursor-pointer"
+                          >
+                            {actionLoading === r.id ? "Processando..." : "Concluir"}
+                          </button>
+                        )}
+                      </Td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
@@ -137,20 +169,26 @@ export default function AdminServiceRequests() {
 
 function StatusBadge({ status }: { status: "IN_PROGRESS" | "COMPLETED" | "REJECTED" }) {
   const map: Record<string, string> = {
-    IN_PROGRESS: "bg-yellow-900/40 text-yellow-400 border border-yellow-700/30",
-    COMPLETED: "bg-green-900/40 text-green-400 border border-green-700/30",
-    REJECTED: "bg-red-900/40 text-red-400 border border-red-700/30",
+    IN_PROGRESS: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+    COMPLETED: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+    REJECTED: "bg-red-500/10 text-red-400 border border-red-500/20",
+  }
+
+  const labels: Record<string, string> = {
+    IN_PROGRESS: "Em Progresso",
+    COMPLETED: "Concluído",
+    REJECTED: "Rejeitado"
   }
 
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-medium ${map[status] || "bg-gray-800 text-gray-300"}`}>
-      {status}
+    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${map[status] || "bg-gray-500/10 text-gray-400 border-gray-500/20"}`}>
+      {labels[status] || status}
     </span>
   )
 }
 
 function Th({ children }: { children: ReactNode }) {
-  return <th className="px-6 py-4 text-left font-medium">{children}</th>
+  return <th className="px-6 py-4 text-left font-black">{children}</th>
 }
 
 function Td({ children, className = "" }: { children: ReactNode; className?: string }) {
@@ -162,4 +200,18 @@ function formatMoney(value: number) {
     style: "currency",
     currency: "AOA"
   }).format(value ?? 0)
+}
+
+function SkeletonRow() {
+  return (
+    <tr className="animate-pulse">
+      <td className="px-6 py-4"><div className="w-10 h-4 bg-white/5 rounded" /></td>
+      <td className="px-6 py-4"><div className="w-28 h-4 bg-white/5 rounded" /></td>
+      <td className="px-6 py-4"><div className="w-32 h-4 bg-white/5 rounded" /></td>
+      <td className="px-6 py-4"><div className="w-24 h-4 bg-white/5 rounded" /></td>
+      <td className="px-6 py-4"><div className="w-20 h-4 bg-white/5 rounded" /></td>
+      <td className="px-6 py-4"><div className="w-24 h-6 bg-white/5 rounded-full" /></td>
+      <td className="px-6 py-4"><div className="w-20 h-8 bg-white/5 rounded-xl" /></td>
+    </tr>
+  )
 }

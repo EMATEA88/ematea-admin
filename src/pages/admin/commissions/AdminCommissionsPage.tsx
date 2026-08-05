@@ -48,6 +48,7 @@ interface CommissionHistory {
   amount: number
   profit: number
   status: string
+  subAgentId?: number | null
   agent?: {
     user?: {
       fullName: string
@@ -84,7 +85,7 @@ interface TopSubAgent {
   }
   sales: number
   profit: number
-  commission?: number
+  commission: number
   requests: number
 }
 
@@ -128,7 +129,7 @@ export default function AdminCommissionsPage() {
       ])
 
       setDashboard(dashboardData)
-      setHistory(historyData)
+      setHistory(Array.isArray(historyData) ? historyData : [])
       setTopAgents(topAgentsData)
       setTopSubAgents(topSubAgentsData)
       setCharts(chartsData)
@@ -159,7 +160,7 @@ export default function AdminCommissionsPage() {
   const commissionChart =
     charts?.commissions?.map(item => ({
       name: item.status,
-      value: item._sum.amount
+      value: item._sum?.amount ?? 0
     })) ?? [];
 
   if (loading && !dashboard) {
@@ -270,10 +271,7 @@ export default function AdminCommissionsPage() {
           <h2 className="font-bold mb-4">Evolução Diária de Vendas (30 dias)</h2>
           <div className="w-full h-[220px] min-h-[220px]">
             {charts?.sales && charts.sales.length > 0 ? (
-             <ResponsiveContainer
-  width="100%"
-  height={220}
->
+             <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={charts.sales}>
                   <XAxis
                     dataKey="createdAt"
@@ -378,20 +376,25 @@ export default function AdminCommissionsPage() {
                     Lucro: {formatMoney(item.profit)}
                   </p>
                 </div>
-                <span className="font-semibold text-green-400">
-                  {formatMoney(item.sales)}
-                </span>
+                <div className="text-right">
+                  <p className="font-semibold text-green-400">
+                    {formatMoney(item.sales)}
+                  </p>
+                  <p className="text-xs text-purple-400">
+                    Comissão: {formatMoney(item.commission)}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Histórico de Comissões */}
+      {/* Histórico de Comissões (Agentes e Sub-agentes) */}
       <div className="bg-[#161A1F] rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <Users size={22} />
-          <h2 className="text-lg font-bold">Histórico de Comissões</h2>
+          <h2 className="text-lg font-bold">Histórico de Comissões (Agentes e Sub-agentes)</h2>
         </div>
 
         <div className="overflow-x-auto">
@@ -399,7 +402,8 @@ export default function AdminCommissionsPage() {
             <thead>
               <tr className="border-b border-white/10 text-left text-gray-400 text-sm">
                 <th className="py-3">Data</th>
-                <th>Agente</th>
+                <th>Responsável / Usuário</th>
+                <th>Tipo</th>
                 <th>Serviço</th>
                 <th>Operadora</th>
                 <th className="text-right">Venda</th>
@@ -411,13 +415,16 @@ export default function AdminCommissionsPage() {
             <tbody>
               {history.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-10 text-gray-500">
+                  <td colSpan={9} className="text-center py-10 text-gray-500">
                     Nenhuma comissão encontrada.
                   </td>
                 </tr>
               )}
               {history.map((item) => {
                 const statusInfo = STATUS[item.status] || { label: item.status, icon: "⚪" }
+                const isSubAgent = Boolean(item.subAgentId)
+                const userName = item.subAgent?.user?.fullName ?? item.agent?.user?.fullName ?? "-"
+
                 return (
                   <tr
                     key={item.id}
@@ -427,7 +434,12 @@ export default function AdminCommissionsPage() {
                       {new Date(item.createdAt).toLocaleDateString("pt-AO")}
                     </td>
                     <td className="font-medium">
-                      {item.agent?.user?.fullName ?? item.subAgent?.user?.fullName ?? "-"}
+                      {userName}
+                    </td>
+                    <td>
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${isSubAgent ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                        {isSubAgent ? 'Sub-agente' : 'Agente'}
+                      </span>
                     </td>
                     <td className="text-gray-300">
                       {item.serviceRequest?.serviceName ?? "-"}

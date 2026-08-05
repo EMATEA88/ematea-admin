@@ -21,7 +21,11 @@ import AdminKYCPage from "./pages/admin/kyc/AdminKYCPage"
 import AdminLogin from "./pages/admin/Login"
 import Agents from "./pages/admin/Agents"
 import SubAgents from "./pages/admin/SubAgents"
-import AkiDashboardPage from "./pages/admin/AkiAccountPage" // <--- Atualizado para o gestor de abas
+import AkiDashboardPage from "./pages/admin/AkiAccountPage"
+import CommissionSubAgentsPage from "./pages/admin/commissions/CommissionSubAgents";
+import CommissionAgentsPage from "./pages/admin/commissions/CommissionAgents";
+import EmateaWalletPage from "./pages/admin/EmateaWalletPage";
+import ClientCommissionsPage from "./pages/admin/ClientCommissionsPage";
 
 export default function App() {
   return (
@@ -80,7 +84,13 @@ export default function App() {
           <Route path="agents" element={<Agents />} />
           <Route path="subagents" element={<SubAgents />} />
           
-          {/* CONTA 5LINHAS / AKI (Corrigido para caminho relativo) */}
+          {/* CORRIGIDO: Removido o prefixo /admin/ absoluto */}
+          <Route path="commissions/sub-agents" element={<CommissionSubAgentsPage />} />
+          <Route path="commissions/agents" element={<CommissionAgentsPage />} />
+          <Route path="wallet" element={<EmateaWalletPage />} />
+          <Route path="commissions/clients" element={<ClientCommissionsPage />} />
+          
+          {/* CONTA 5LINHAS / AKI */}
           <Route path="aki" element={<AkiDashboardPage />} />
 
           {/* SERVICES */}

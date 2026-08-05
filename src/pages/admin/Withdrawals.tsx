@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import DataTable from "../../components/admin/DataTable"
 import { AdminService } from "../../services/admin.service"
+import { Money, MagnifyingGlass, ArrowClockwise, FilePdf } from "@phosphor-icons/react"
 
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
@@ -17,7 +18,6 @@ interface Withdrawal {
 }
 
 export default function Withdrawals() {
-
   const [items, setItems] = useState<Withdrawal[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<number | null>(null)
@@ -128,176 +128,169 @@ export default function Withdrawals() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="p-8 text-gray-400">
-        Carregando saques...
-      </div>
-    )
-  }
-
   return (
-    <div className="p-8 space-y-8 text-white">
+    <div className="p-10 bg-[#0B0E11] min-h-screen text-white space-y-10 max-w-[1600px] mx-auto font-sans">
 
       {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Saques
-        </h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/5 pb-8">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/25">
+              Módulo Financeiro
+            </span>
+            <span className="text-gray-500 text-xs">•</span>
+            <span className="text-gray-400 text-xs font-mono">Gestão de Saques</span>
+          </div>
+          <h1 className="text-3xl font-black tracking-tight uppercase text-white">
+            Saques
+          </h1>
+          <p className="text-gray-400 text-sm flex items-center gap-2">
+            <Money size={16} className="text-blue-400" />
+            Controlo e aprovação de pedidos de levantamento via IBAN dos utilizadores.
+          </p>
+        </div>
 
-        <button
-          onClick={exportPDF}
-          className="
-            bg-emerald-600
-            hover:bg-emerald-700
-            text-white
-            px-5 py-2
-            rounded-xl
-            text-sm
-            font-semibold
-            transition
-          "
-        >
-          Exportar PDF
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={load}
+            disabled={loading}
+            className="flex items-center gap-2 bg-[#161A1F] hover:bg-[#1C2128] text-white px-5 py-3 rounded-2xl border border-white/5 text-xs font-bold uppercase tracking-wider transition-all shadow-xl disabled:opacity-50 cursor-pointer"
+          >
+            <ArrowClockwise size={16} className={`text-blue-400 ${loading ? "animate-spin" : ""}`} />
+            Atualizar
+          </button>
+
+          <button
+            onClick={exportPDF}
+            className="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all shadow-xl cursor-pointer"
+          >
+            <FilePdf size={16} />
+            Exportar PDF
+          </button>
+        </div>
       </div>
 
-      {/* SEARCH */}
-      <div>
-        <input
-          placeholder="Pesquisar por ID, Telefone ou IBAN"
-          className="
-            bg-gray-900
-            border border-gray-800
-            px-4 py-2
-            rounded-xl
-            w-96
-            text-sm
-            focus:outline-none
-            focus:ring-2
-            focus:ring-emerald-500
-            transition
-          "
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {/* SEARCH BAR */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="relative w-full md:w-96">
+          <MagnifyingGlass size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            placeholder="Pesquisar por ID, Telefone ou IBAN..."
+            className="w-full bg-[#161A1F] border border-white/5 pl-11 pr-4 py-3 rounded-2xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-all shadow-xl"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* TABLE CARD */}
-      <div className="
-        bg-gray-950
-        border border-gray-800
-        rounded-2xl
-        shadow-xl
-        overflow-hidden
-      ">
-        <DataTable
-          data={filtered}
-          columns={[
-            {
-              key: "id",
-              label: "ID",
-              render: (r: Withdrawal) => (
-                <span className="text-gray-400 text-xs">
-                  #{r.id}
-                </span>
-              )
-            },
-
-            {
-              key: "userPhone",
-              label: "Utilizador",
-              render: (r: Withdrawal) =>
-                <span className="font-semibold">
-                  {r.userPhone}
-                </span>
-            },
-
-            { key: "iban", label: "IBAN" },
-
-            {
-              key: "amount",
-              label: "Valor",
-              render: (r: Withdrawal) =>
-                <span className="text-yellow-400 font-semibold">
-                  {formatMoney(r.amount)}
-                </span>
-            },
-
-            {
-              key: "fee",
-              label: "Taxa",
-              render: (r: Withdrawal) =>
-                <span className="text-red-400 text-sm">
-                  {formatMoney(r.fee)}
-                </span>
-            },
-
-            {
-              key: "liquid",
-              label: "Líquido",
-              render: (r: Withdrawal) =>
-                <span className="text-emerald-400 font-semibold">
-                  {formatMoney(
-                    r.liquid !== undefined
-                      ? r.liquid
-                      : r.amount - r.fee
-                  )}
-                </span>
-            },
-
-            {
-              key: "status",
-              label: "Estado",
-              render: (r: Withdrawal) =>
-                <StatusBadge status={r.status} />
-            },
-
-            {
-              key: "actions",
-              label: "Ações",
-              render: (r: Withdrawal) =>
-                r.status === "PENDING" && (
-                  <div className="flex gap-2">
-                    <button
-                      disabled={processingId === r.id}
-                      className="
-                        bg-emerald-600
-                        hover:bg-emerald-700
-                        disabled:opacity-50
-                        text-white
-                        px-3 py-1
-                        rounded-lg
-                        text-xs
-                        transition
-                      "
-                      onClick={() => approve(r.id)}
-                    >
-                      Aprovar
-                    </button>
-
-                    <button
-                      disabled={processingId === r.id}
-                      className="
-                        bg-red-600
-                        hover:bg-red-700
-                        disabled:opacity-50
-                        text-white
-                        px-3 py-1
-                        rounded-lg
-                        text-xs
-                        transition
-                      "
-                      onClick={() => reject(r.id)}
-                    >
-                      Rejeitar
-                    </button>
-                  </div>
+      <div className="bg-[#161A1F] border border-white/5 rounded-[2rem] shadow-xl overflow-hidden">
+        {loading ? (
+          <div className="p-16 space-y-4">
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+          </div>
+        ) : (
+          <DataTable
+            data={filtered}
+            columns={[
+              {
+                key: "id",
+                label: "ID",
+                render: (r: Withdrawal) => (
+                  <span className="text-blue-400 text-xs font-mono font-bold">
+                    #{r.id}
+                  </span>
                 )
-            },
-          ]}
-        />
+              },
+
+              {
+                key: "userPhone",
+                label: "Utilizador",
+                render: (r: Withdrawal) =>
+                  <span className="font-semibold text-gray-200">
+                    {r.userPhone}
+                  </span>
+              },
+
+              { 
+                key: "iban", 
+                label: "IBAN",
+                render: (r: Withdrawal) => (
+                  <span className="font-mono text-xs text-gray-400">
+                    {r.iban || "-"}
+                  </span>
+                )
+              },
+
+              {
+                key: "amount",
+                label: "Valor",
+                render: (r: Withdrawal) =>
+                  <span className="text-amber-400 font-bold font-mono">
+                    {formatMoney(r.amount)}
+                  </span>
+              },
+
+              {
+                key: "fee",
+                label: "Taxa",
+                render: (r: Withdrawal) =>
+                  <span className="text-red-400 font-bold font-mono text-xs">
+                    {formatMoney(r.fee)}
+                  </span>
+              },
+
+              {
+                key: "liquid",
+                label: "Líquido",
+                render: (r: Withdrawal) =>
+                  <span className="text-emerald-400 font-black font-mono">
+                    {formatMoney(
+                      r.liquid !== undefined
+                        ? r.liquid
+                        : r.amount - r.fee
+                    )}
+                  </span>
+              },
+
+              {
+                key: "status",
+                label: "Estado",
+                render: (r: Withdrawal) =>
+                  <StatusBadge status={r.status} />
+              },
+
+              {
+                key: "actions",
+                label: "Ações",
+                render: (r: Withdrawal) =>
+                  r.status === "PENDING" && (
+                    <div className="flex gap-2">
+                      <button
+                        disabled={processingId === r.id}
+                        onClick={() => approve(r.id)}
+                        className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer shadow-lg"
+                      >
+                        {processingId === r.id ? "..." : "Aprovar"}
+                      </button>
+
+                      <button
+                        disabled={processingId === r.id}
+                        onClick={() => reject(r.id)}
+                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer shadow-lg"
+                      >
+                        {processingId === r.id ? "..." : "Rejeitar"}
+                      </button>
+                    </div>
+                  )
+              },
+            ]}
+          />
+        )}
       </div>
+
     </div>
   )
 }
@@ -305,16 +298,21 @@ export default function Withdrawals() {
 /* ================= STATUS BADGE ================= */
 
 function StatusBadge({ status }: { status: string }) {
-
   const styles: Record<string, string> = {
-    PENDING: "bg-yellow-600/20 text-yellow-400",
-    APPROVED: "bg-emerald-600/20 text-emerald-400",
-    REJECTED: "bg-red-600/20 text-red-400",
+    PENDING: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+    APPROVED: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+    REJECTED: "bg-red-500/10 text-red-400 border border-red-500/20",
+  }
+
+  const labels: Record<string, string> = {
+    PENDING: "Pendente",
+    APPROVED: "Aprovado",
+    REJECTED: "Rejeitado"
   }
 
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${styles[status] || "bg-gray-600/20 text-gray-400"}`}>
-      {status}
+    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${styles[status] || "bg-gray-500/10 text-gray-400 border-gray-500/20"}`}>
+      {labels[status] || status}
     </span>
   )
 }
@@ -324,4 +322,19 @@ function formatMoney(value: number) {
     style: "currency",
     currency: "AOA",
   }).format(value ?? 0)
+}
+
+function SkeletonRow() {
+  return (
+    <div className="flex items-center justify-between animate-pulse py-4 border-b border-white/5 last:border-none">
+      <div className="w-12 h-4 bg-white/5 rounded" />
+      <div className="w-28 h-4 bg-white/5 rounded" />
+      <div className="w-40 h-4 bg-white/5 rounded" />
+      <div className="w-24 h-4 bg-white/5 rounded" />
+      <div className="w-20 h-4 bg-white/5 rounded" />
+      <div className="w-24 h-4 bg-white/5 rounded" />
+      <div className="w-24 h-6 bg-white/5 rounded-full" />
+      <div className="w-28 h-8 bg-white/5 rounded-xl" />
+    </div>
+  )
 }

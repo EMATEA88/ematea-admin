@@ -11,27 +11,37 @@ import {
   Building2,
   ShieldCheck,
   UserCheck,
-  Server // <- Ícone importado para a AKI
+  Percent,
+  Server,
+  Wallet
 } from "lucide-react"
 
 const sectionTitle =
-  "px-6 pt-6 pb-2 text-[11px] uppercase text-gray-500 tracking-wider"
+  "px-6 pt-6 pb-2 text-[10px] uppercase text-gray-500 font-extrabold tracking-widest"
 
 const linkBase =
-  "flex items-center gap-3 px-6 py-2.5 text-sm rounded-lg transition-all duration-200"
+  "flex items-center gap-3 px-6 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative"
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 h-screen bg-[#0B0E11] border-r border-[#1E2329] flex flex-col">
+    <aside className="w-64 h-screen bg-[#0B0E11] border-r border-[#1E2329] flex flex-col flex-shrink-0 select-none">
 
-      {/* LOGO FIXO */}
-      <div className="h-16 flex items-center px-6 text-lg font-semibold border-b border-[#1E2329] tracking-wide flex-shrink-0">
-        EMATEA
+      {/* LOGO FIXO INSTITUCIONAL */}
+      <div className="h-20 flex items-center justify-between px-6 border-b border-[#1E2329] flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-lg shadow-emerald-500/5">
+            <span className="text-emerald-400 font-black text-sm tracking-wider">E</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-black text-white tracking-widest text-sm">EMATEA</span>
+            <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest">Admin Control</span>
+          </div>
+        </div>
       </div>
 
       {/* NAV COM SCROLL REAL */}
       <div className="flex-1 overflow-hidden">
-        <nav className="h-full overflow-y-auto py-4 pr-2 scrollbar-thin scrollbar-thumb-[#2B3139] hover:scrollbar-thumb-[#3A4149]">
+        <nav className="h-full overflow-y-auto py-4 px-3 space-y-1 scrollbar-thin scrollbar-thumb-[#2B3139] hover:scrollbar-thumb-[#3A4149]">
 
           {/* CORE */}
           <div className={sectionTitle}>Core</div>
@@ -63,6 +73,11 @@ export default function Sidebar() {
           {/* FINANCEIRO */}
           <div className={sectionTitle}>Financeiro</div>
 
+          {/* ✨ NOVA WALLET DA EMATEA EM DESTAQUE */}
+          <SidebarLink to="/admin/wallet" icon={<Wallet size={18} className="text-emerald-400" />}>
+            Wallet Ematea
+          </SidebarLink>
+
           <SidebarLink to="/admin/banks" icon={<Building2 size={18} />}>
             Bancos
           </SidebarLink>
@@ -80,7 +95,19 @@ export default function Sidebar() {
           </SidebarLink>
 
           <SidebarLink to="/admin/commissions" icon={<Repeat size={18} />}>
-            Comissões
+            Comissões Gerais
+          </SidebarLink>
+
+          <SidebarLink to="/admin/commissions/agents" icon={<Percent size={18} />}>
+            Comissões Agentes
+          </SidebarLink>
+          
+          <SidebarLink to="/admin/commissions/sub-agents" icon={<Percent size={18} />}>
+            Comissões Sub-Agentes
+          </SidebarLink>
+
+          <SidebarLink to="/admin/commissions/clients" icon={<Percent size={18} />}>
+            Comissões Clientes
           </SidebarLink>
 
           {/* SERVIÇOS */}
@@ -94,7 +121,7 @@ export default function Sidebar() {
             Parceiros
           </SidebarLink>
 
-          {/* NOVO LINK AKI / OPERADORA */}
+          {/* CONTA 5LINHAS */}
           <SidebarLink to="/admin/aki" icon={<Server size={18} />}>
             Conta 5Linhas
           </SidebarLink>
@@ -110,7 +137,7 @@ export default function Sidebar() {
             Gift
           </SidebarLink>
 
-          {/* 🔥 espaço extra para garantir scroll até o fim */}
+          {/* ESPAÇO EXTRA PARA SCROLL */}
           <div className="h-24" />
         </nav>
       </div>
@@ -122,18 +149,29 @@ function SidebarLink({ to, icon, children }: any) {
   return (
     <NavLink
       to={to}
+      end={to === "/admin"}
       className={({ isActive }) =>
         `
         ${linkBase}
         ${isActive
-          ? "bg-[#1A1F24] text-white"
-          : "text-gray-400 hover:text-white hover:bg-[#14171A]"
+          ? "bg-[#161A1F] text-white font-bold border border-white/5 shadow-inner"
+          : "text-gray-400 hover:text-white hover:bg-[#12161B]"
         }
       `
       }
     >
-      {icon && icon}
-      <span className="truncate">{children}</span>
+      {({ isActive }) => (
+        <>
+          {/* Indicador lateral ativo */}
+          {isActive && (
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-emerald-500 rounded-r-full" />
+          )}
+          <span className={`${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-200"} transition-colors`}>
+            {icon}
+          </span>
+          <span className="truncate">{children}</span>
+        </>
+      )}
     </NavLink>
   )
 }

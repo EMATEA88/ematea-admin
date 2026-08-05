@@ -1,10 +1,10 @@
-import { type PartnerChartsData } from "../../../types/partner";
+import type { PartnerChartsData } from "../../../types/partner";
 
 export function PartnerCharts({ charts }: { charts: PartnerChartsData }) {
   return (
     <div className="space-y-6 text-gray-100">
-      <div className="bg-[#1a2234] p-6 rounded-xl border border-gray-800 shadow-xl">
-        <h3 className="text-base font-semibold text-white mb-4">
+      <div className="bg-[#161A1F] p-6 rounded-2xl border border-white/5 shadow-xl">
+        <h3 className="text-base font-bold text-white mb-4">
           Evolução de Vendas e Lucro (Últimos 30 Dias)
         </h3>
         
@@ -12,25 +12,25 @@ export function PartnerCharts({ charts }: { charts: PartnerChartsData }) {
           {charts.sales.map((item, idx) => (
             <div 
               key={idx} 
-              className="flex items-center justify-between p-3 border-b border-gray-800/60 hover:bg-[#121824]/50 rounded-lg transition-colors text-sm"
+              className="flex items-center justify-between p-3.5 border-b border-white/5 hover:bg-white/[0.02] rounded-xl transition-colors text-sm"
             >
-              <span className="text-gray-400">
+              <span className="text-gray-400 text-xs font-medium">
                 {new Date(item.createdAt).toLocaleDateString()}
               </span>
               
               <div className="flex gap-6">
-                <span className="text-gray-200 font-semibold">
-                  Valor: <span className="text-white">${item.amount.toFixed(2)}</span>
+                <span className="text-gray-400 text-xs">
+                  Valor: <span className="text-white font-semibold">{formatMoney(item.amount)}</span>
                 </span>
-                <span className="text-emerald-400 font-semibold">
-                  Lucro: ${item.profit.toFixed(2)}
+                <span className="text-emerald-400 text-xs font-semibold">
+                  Lucro: {formatMoney(item.profit)}
                 </span>
               </div>
             </div>
           ))}
 
           {charts.sales.length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-8">
+            <p className="text-sm text-gray-500 text-center py-12">
               Nenhum dado de venda recente registrado.
             </p>
           )}
@@ -38,4 +38,11 @@ export function PartnerCharts({ charts }: { charts: PartnerChartsData }) {
       </div>
     </div>
   );
+}
+
+function formatMoney(value: number | undefined | null) {
+  return new Intl.NumberFormat("pt-AO", {
+    style: "currency",
+    currency: "AOA"
+  }).format(Number(value ?? 0));
 }
