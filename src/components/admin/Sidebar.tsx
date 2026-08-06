@@ -13,7 +13,8 @@ import {
   UserCheck,
   Percent,
   Server,
-  Wallet
+  Wallet,
+  DollarSign
 } from "lucide-react"
 
 const sectionTitle =
@@ -39,9 +40,9 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* NAV COM SCROLL REAL */}
+      {/* NAV COM SCROLL LARGO E FACILITADO */}
       <div className="flex-1 overflow-hidden">
-        <nav className="h-full overflow-y-auto py-4 px-3 space-y-1 scrollbar-thin scrollbar-thumb-[#2B3139] hover:scrollbar-thumb-[#3A4149]">
+        <nav className="h-full overflow-y-auto py-4 px-3 space-y-1 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-track]:bg-[#0B0E11] [&::-webkit-scrollbar-thumb]:bg-[#2B3139] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#3A4149]">
 
           {/* CORE */}
           <div className={sectionTitle}>Core</div>
@@ -108,6 +109,11 @@ export default function Sidebar() {
 
           <SidebarLink to="/admin/commissions/clients" icon={<Percent size={18} />}>
             Comissões Clientes
+          </SidebarLink>
+
+          {/* ✨ NOVA PÁGINA DE SALÁRIOS E BÓNUS (LOGO APÓS COMISSÕES) */}
+          <SidebarLink to="/admin/sub-agents/salaries" icon={<DollarSign size={18} className="text-cyan-400" />}>
+            Salários & Bónus
           </SidebarLink>
 
           {/* SERVIÇOS */}

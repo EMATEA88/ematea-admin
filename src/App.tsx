@@ -26,6 +26,7 @@ import CommissionSubAgentsPage from "./pages/admin/commissions/CommissionSubAgen
 import CommissionAgentsPage from "./pages/admin/commissions/CommissionAgents";
 import EmateaWalletPage from "./pages/admin/EmateaWalletPage";
 import ClientCommissionsPage from "./pages/admin/ClientCommissionsPage";
+import SubAgentSalariesPage from "./pages/admin/SubAgentSalariesPage";
 
 export default function App() {
   return (
@@ -83,6 +84,7 @@ export default function App() {
           <Route path="kyc" element={<AdminKYCPage />} />
           <Route path="agents" element={<Agents />} />
           <Route path="subagents" element={<SubAgents />} />
+          <Route path="/admin/sub-agents/salaries" element={<SubAgentSalariesPage />} />
           
           {/* CORRIGIDO: Removido o prefixo /admin/ absoluto */}
           <Route path="commissions/sub-agents" element={<CommissionSubAgentsPage />} />
