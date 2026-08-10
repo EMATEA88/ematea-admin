@@ -10,6 +10,7 @@ const Card = ({ title, value, color = "text-white" }: any) => (
 
 export default function AkiBusinessPage({ data }: { data?: any }) {
   const [dashboard, setDashboard] = useState<any>(data || null);
+  const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(!data);
 
   // Garante a sincronização imediata sempre que a prop 'data' mudar no componente pai
@@ -21,13 +22,16 @@ export default function AkiBusinessPage({ data }: { data?: any }) {
   }, [data]);
 
   useEffect(() => {
-    if (data) return; // Se já temos dados via props, não precisamos fazer fetch manual
-
     async function fetchDashboard() {
       try {
         setLoading(true);
-        const res = await adminAkiService.getDashboard();
-        setDashboard(res.data);
+        const [dashboardRes, reportsRes] = await Promise.all([
+          data ? Promise.resolve({ data }) : adminAkiService.getDashboard(),
+          adminAkiService.getPurchaseReport()
+        ]);
+        
+        setDashboard(dashboardRes.data);
+        setReports(reportsRes.data?.Reports ?? []);
       } catch (error) {
         console.error('Erro ao carregar dados de negócio', error);
       } finally {
@@ -116,6 +120,65 @@ export default function AkiBusinessPage({ data }: { data?: any }) {
             <Card title="Clientes" value={`${Number(dashboard?.wallets?.clients ?? 0).toLocaleString()} Kz`} color="text-cyan-400" />
             <Card title="Agentes" value={`${Number(dashboard?.wallets?.agents ?? 0).toLocaleString()} Kz`} color="text-blue-400" />
           </div>
+        </div>
+      </div>
+
+      {/* RELATÓRIO OFICIAL AKI */}
+      <div className="bg-[#12161C] border border-[#1E2329] rounded-2xl p-6 shadow-xl space-y-4">
+        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+          <h2 className="text-lg font-bold text-white">Relatório Oficial AKI</h2>
+          <span className="text-xs font-mono px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            {reports.length} registos
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-gray-800 text-[11px] font-black uppercase tracking-widest text-gray-400 bg-[#161a1f]/50">
+                <th className="py-3 px-4">Order ID</th>
+                <th className="py-3 px-4">Produto</th>
+                <th className="py-3 px-4">Destino</th>
+                <th className="py-3 px-4">Valor</th>
+                <th className="py-3 px-4">Estado</th>
+                <th className="py-3 px-4">Data</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800/60 text-sm">
+              {reports.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-gray-500 text-xs uppercase font-medium">
+                    Nenhum relatório oficial encontrado.
+                  </td>
+                </tr>
+              ) : (
+                reports.map((item: any, index: number) => (
+                  <tr key={index} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="py-3 px-4 font-mono text-xs text-gray-300">
+                      {item.OrderId || item.orderId || "N/A"}
+                    </td>
+                    <td className="py-3 px-4 text-xs text-gray-300">
+                      {item.ProductName || item.productName || item.PlanName || "N/A"}
+                    </td>
+                    <td className="py-3 px-4 font-mono text-xs text-gray-400">
+                      {item.Destination || item.destination || "N/A"}
+                    </td>
+                    <td className="py-3 px-4 font-mono text-xs text-emerald-400 font-bold">
+                      {Number(item.Amount ?? item.amount ?? 0).toLocaleString()} Kz
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        {item.Status || item.status || "N/A"}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-xs text-gray-400">
+                      {item.Date || item.date || item.CreatedAt || "N/A"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

@@ -3,10 +3,17 @@ import { adminAkiService } from '../../services/adminAki.service';
 import AkiOverviewPage from './AkiOverviewPage';
 import AkiBusinessPage from './AkiBusinessPage';
 import AkiLogsPage from './AkiLogsPage';
+import AkiAuditPage from './AkiAuditPage';
 import { Cpu, ShieldCheck } from "@phosphor-icons/react";
 
+type Tab =
+  | "overview"
+  | "business"
+  | "logs"
+  | "audit";
+
 export default function AkiParentDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'business' | 'logs'>('overview');
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +58,7 @@ export default function AkiParentDashboard() {
         </div>
 
         {/* NAVEGAÇÃO ENTRE ABAS ESTILIZADA */}
-        <div className="flex items-center gap-2 bg-[#161A1F] p-1.5 rounded-2xl border border-white/5 shadow-xl">
+        <div className="flex items-center gap-2 bg-[#161A1F] p-1.5 rounded-2xl border border-white/5 shadow-xl flex-wrap">
           <button 
             onClick={() => setActiveTab('overview')} 
             className={`px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer ${
@@ -82,6 +89,16 @@ export default function AkiParentDashboard() {
           >
             Auditoria & Histórico
           </button>
+          <button
+            onClick={() => setActiveTab("audit")}
+            className={`px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer ${
+              activeTab === 'audit' 
+                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-lg' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            Auditoria
+          </button>
         </div>
       </div>
 
@@ -110,6 +127,9 @@ export default function AkiParentDashboard() {
           )}
           {activeTab === 'logs' && (
             <AkiLogsPage data={dashboardData} />
+          )}
+          {activeTab === 'audit' && (
+            <AkiAuditPage />
           )}
         </div>
       )}
