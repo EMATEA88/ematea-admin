@@ -109,14 +109,9 @@ export default function SubAgentSalariesPage() {
 
   const allHistoryRecords = subAgents.flatMap((agent: any) => {
     // Se o backend fornecer agent.paymentHistory usamos ele, caso contrário geramos histórico estático global fixo por agente
-    const history = agent.paymentHistory && agent.paymentHistory.length > 0 
-      ? agent.paymentHistory 
-      : [
-          { month: "Julho", year: 2026, totalPaid: Number(agent.baseSalary || 0) },
-          { month: "Junho", year: 2026, totalPaid: Number(agent.baseSalary || 0) * 0.9 }
-        ];
+    const history = agent.paymentHistory ?? [];
 
-    return history.map((item: any) => ({
+return history.map((item: any) => ({
       agentName: agent.user.fullName,
       employeeCode: agent.employeeCode,
       month: item.month,
