@@ -14,7 +14,8 @@ import {
   Percent,
   Server,
   Wallet,
-  DollarSign
+  DollarSign,
+  BarChart3
 } from "lucide-react"
 
 const sectionTitle =
@@ -79,6 +80,11 @@ export default function Sidebar() {
             Wallet Ematea
           </SidebarLink>
 
+          {/* ✨ NOVO RELATÓRIO DE VENDAS E COMISSÕES ADICIONADO */}
+          <SidebarLink to="/admin/reports/sales-commissions" icon={<BarChart3 size={18} className="text-blue-400" />}>
+            Vendas & Comissões
+          </SidebarLink>
+
           <SidebarLink to="/admin/banks" icon={<Building2 size={18} />}>
             Bancos
           </SidebarLink>
@@ -111,7 +117,7 @@ export default function Sidebar() {
             Comissões Clientes
           </SidebarLink>
 
-          {/* ✨ NOVA PÁGINA DE SALÁRIOS E BÓNUS (LOGO APÓS COMISSÕES) */}
+          {/* ✨ SALÁRIOS & BÓNUS */}
           <SidebarLink to="/admin/sub-agents/salaries" icon={<DollarSign size={18} className="text-cyan-400" />}>
             Salários & Bónus
           </SidebarLink>
