@@ -276,29 +276,35 @@ export default function Recharges() {
 
                       {/* AÇÕES */}
                       <td className="py-4 px-6 text-right">
-                        {r.status === 'PENDING' ? (
-                          <div className="flex gap-2 justify-end">
-                            <button
-                              disabled={!!processing}
-                              onClick={() => approve(r.id)}
-                              className="flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-xl font-bold transition-all disabled:opacity-50"
-                            >
-                              <Check size={14} />
-                              {isApproving ? 'A processar...' : 'Aprovar'}
-                            </button>
+                        {method === 'CRYPTO' ? (
+  <span className="text-cyan-400 font-bold uppercase text-[10px]">
+    Processamento automático
+  </span>
+) : r.status === 'PENDING' ? (
+  <div className="flex gap-2 justify-end">
+    <button
+      disabled={!!processing}
+      onClick={() => approve(r.id)}
+      className="flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-xl font-bold transition-all disabled:opacity-50"
+    >
+      <Check size={14} />
+      {isApproving ? 'A processar...' : 'Aprovar'}
+    </button>
 
-                            <button
-                              disabled={!!processing}
-                              onClick={() => reject(r.id)}
-                              className="flex items-center gap-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-xl font-bold transition-all disabled:opacity-50"
-                            >
-                              <X size={14} />
-                              {isRejecting ? 'A processar...' : 'Rejeitar'}
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-gray-600 font-bold uppercase text-[10px]">Concluído</span>
-                        )}
+    <button
+      disabled={!!processing}
+      onClick={() => reject(r.id)}
+      className="flex items-center gap-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-xl font-bold transition-all disabled:opacity-50"
+    >
+      <X size={14} />
+      {isRejecting ? 'A processar...' : 'Rejeitar'}
+    </button>
+  </div>
+) : (
+  <span className="text-gray-600 font-bold uppercase text-[10px]">
+    Concluído
+  </span>
+)}
                       </td>
                     </tr>
                   )

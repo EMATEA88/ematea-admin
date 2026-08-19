@@ -138,6 +138,11 @@ export default function Sidebar() {
             Conta 5Linhas
           </SidebarLink>
 
+          {/* REDOTPAY */}
+          <SidebarLink to="/admin/redotpay" icon={<Wallet size={18} className="text-blue-400" />}>
+            RedotPay
+          </SidebarLink>
+
           {/* COMPLIANCE */}
           <div className={sectionTitle}>Compliance</div>
 
