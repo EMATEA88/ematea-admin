@@ -192,10 +192,71 @@ export const AdminService = {
   },
 
   // ================= TRANSACTIONS =================
-  transactions: async () => {
-    const { data } = await api.get("/admin/transactions")
-    return data
-  },
+
+transactions: async (
+  page = 1,
+  limit = 20,
+  params?: {
+    type?: string
+    userId?: number
+  }
+) => {
+
+  const { data } = await api.get(
+    "/admin/transactions",
+    {
+      params: {
+        page,
+        limit,
+        ...params
+      }
+    }
+  )
+
+  return data
+},
+
+transactionSearch: async (
+  query: string
+) => {
+
+  if (!query?.trim()) {
+    throw new Error(
+      "SEARCH_QUERY_REQUIRED"
+    )
+  }
+
+  const { data } = await api.get(
+    "/admin/transactions/search",
+    {
+      params: {
+        q: query.trim()
+      }
+    }
+  )
+
+  return data
+},
+
+transactionDetails: async (
+  id: number
+) => {
+
+  if (
+    !Number.isInteger(id) ||
+    id <= 0
+  ) {
+    throw new Error(
+      "INVALID_TRANSACTION_ID"
+    )
+  }
+
+  const { data } = await api.get(
+    `/admin/transactions/${id}`
+  )
+
+  return data
+},
 
   // ================= BANKS =================
   banks: async () => {
