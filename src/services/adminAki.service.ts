@@ -19,6 +19,49 @@ export const adminAkiService = {
   },
 
   /**
+   * =========================================================
+   * AUDITORIA AKI
+   * =========================================================
+   */
+
+  /**
+   * Resumo da auditoria
+   *
+   * Retorna:
+   * {
+   *   total,
+   *   consistent,
+   *   inconsistent
+   * }
+   */
+  async getAuditSummary() {
+    const response = await api.get("/admin/aki/audit/summary");
+    return response.data;
+  },
+
+  /**
+   * Compras atualmente pendentes
+   *
+   * Importante:
+   * Este endpoint consulta somente PENDING / IN_PROGRESS.
+   */
+  async getAuditPending() {
+    const response = await api.get("/admin/aki/audit/pending");
+    return response.data;
+  },
+
+  /**
+   * Compras com inconsistências
+   */
+  async getAuditInconsistencies() {
+    const response = await api.get(
+      "/admin/aki/audit/inconsistencies"
+    );
+
+    return response.data;
+  },
+
+  /**
    * Relatório de Compras
    */
   async getPurchaseReport(data?: {

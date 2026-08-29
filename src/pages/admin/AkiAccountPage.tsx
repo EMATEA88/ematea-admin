@@ -129,7 +129,7 @@ export default function AkiParentDashboard() {
             <AkiLogsPage data={dashboardData} />
           )}
           {activeTab === 'audit' && (
-            <AkiAuditPage />
+            <AkiAuditPage data={dashboardData} />
           )}
         </div>
       )}

@@ -26,15 +26,29 @@ export default function AkiAuditPage({ data }: Props) {
     try {
       setLoading(true);
 
-      const response = await adminAkiService.getDashboard();
-      const dashboard = response.data;
+      const dashboard = await adminAkiService.getDashboard();
 
       if (dashboard?.audit) {
-        setSummary(dashboard.audit.summary);
-        setPending(dashboard.audit.pending);
-        setInconsistencies(dashboard.audit.inconsistencies);
-        setAudits(dashboard.audit.history);
-      }
+  setSummary(dashboard.audit.summary ?? null);
+
+  setPending(
+    Array.isArray(dashboard.audit.pending)
+      ? dashboard.audit.pending
+      : []
+  );
+
+  setInconsistencies(
+    Array.isArray(dashboard.audit.inconsistencies)
+      ? dashboard.audit.inconsistencies
+      : []
+  );
+
+  setAudits(
+    Array.isArray(dashboard.audit.history)
+      ? dashboard.audit.history
+      : []
+  );
+}
 
     } catch (error) {
       console.error("Erro ao carregar auditoria:", error);
@@ -44,16 +58,32 @@ export default function AkiAuditPage({ data }: Props) {
   }, []);
 
   useEffect(() => {
-    if (data?.audit) {
-      setSummary(data.audit.summary);
-      setPending(data.audit.pending);
-      setInconsistencies(data.audit.inconsistencies);
-      setAudits(data.audit.history);
-      setLoading(false);
-    } else {
-      load();
-    }
-  }, [data, load]);
+  if (data?.audit) {
+    setSummary(data.audit.summary ?? null);
+
+    setPending(
+      Array.isArray(data.audit.pending)
+        ? data.audit.pending
+        : []
+    );
+
+    setInconsistencies(
+      Array.isArray(data.audit.inconsistencies)
+        ? data.audit.inconsistencies
+        : []
+    );
+
+    setAudits(
+      Array.isArray(data.audit.history)
+        ? data.audit.history
+        : []
+    );
+
+    setLoading(false);
+  } else {
+    load();
+  }
+}, [data, load]);
 
   if (loading && !summary) {
     return (
