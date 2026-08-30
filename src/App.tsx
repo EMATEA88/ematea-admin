@@ -28,6 +28,7 @@ import EmateaWalletPage from "./pages/admin/EmateaWalletPage";
 import ClientCommissionsPage from "./pages/admin/ClientCommissionsPage";
 import SubAgentSalariesPage from "./pages/admin/SubAgentSalariesPage";
 import SalesAndCommissionsReport from "./pages/SalesAndCommissionsReport";
+import Calendar from "./pages/admin/Calendar";
 
 export default function App() {
   return (
@@ -93,6 +94,11 @@ export default function App() {
           <Route path="commissions/agents" element={<CommissionAgentsPage />} />
           <Route path="wallet" element={<EmateaWalletPage />} />
           <Route path="commissions/clients" element={<ClientCommissionsPage />} />
+
+          <Route
+  path="commissions/calendar"
+  element={<Calendar />}
+/>
           
           {/* CONTA 5LINHAS / AKI */}
           <Route path="aki" element={<AkiDashboardPage />} />
