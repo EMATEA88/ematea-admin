@@ -5,10 +5,13 @@ import {
   CaretRight,
   Clock,
   CurrencyCircleDollar,
+  DownloadSimple,
   UserCircle
 } from "@phosphor-icons/react";
 import { toast } from "react-hot-toast";
 import { AdminCommissionService } from "../../services/admin-commission.service";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 /* =====================================================
    TYPES
@@ -371,6 +374,187 @@ export default function CommissionCalendarPage() {
     )?.name ?? "";
 
   /* =====================================================
+     EXPORTAR EXTRATO PARA PDF
+  ===================================================== */
+
+  function exportToPDF() {
+    if (!selectedSubAgent || !dailyData) {
+      toast.error("Selecione um sub-agente para exportar o extrato.");
+      return;
+    }
+
+    if (!dailyData.sales?.length) {
+      toast.error("Não existem transações para exportar neste dia.");
+      return;
+    }
+
+    try {
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const selectedDateFormatted = parseDate(selectedDate).toLocaleDateString(
+        "pt-AO",
+        {
+          day: "2-digit",
+          month: "long",
+          year: "numeric"
+        }
+      );
+
+      // Cabeçalho
+      pdf.setFillColor(7, 9, 13);
+      pdf.rect(0, 0, pageWidth, 38, "F");
+
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(18);
+      pdf.text("EMATEA", 14, 15);
+
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(190, 198, 210);
+      pdf.text("EXTRATO DIÁRIO", 14, 23);
+
+      pdf.setFontSize(9);
+      pdf.text(
+        `Gerado em ${new Date().toLocaleString("pt-AO")}`,
+        pageWidth - 14,
+        15,
+        { align: "right" }
+      );
+
+      // Informações do extrato
+      pdf.setTextColor(35, 40, 48);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(12);
+      pdf.text("Informações do extrato", 14, 50);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+
+      pdf.text("Sub-agente:", 14, 59);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(selectedSubAgentName || `Sub-agente ${selectedSubAgent}`, 42, 59);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Data:", 14, 66);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(selectedDateFormatted, 42, 66);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Total de transações:", 14, 73);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(String(dailyData.sales.length), 54, 73);
+
+      // Resumo financeiro
+      pdf.setFillColor(239, 250, 245);
+      pdf.roundedRect(14, 81, pageWidth - 28, 25, 3, 3, "F");
+
+      pdf.setTextColor(20, 100, 70);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(9);
+      pdf.text("TOTAL ACUMULADO DO DIA", 20, 91);
+
+      pdf.setFontSize(15);
+      pdf.text(formatCurrency(dailyData.total), 20, 100);
+
+      // Tabela
+      const tableRows = dailyData.sales.map((sale) => [
+        sale.time || "-",
+        sale.service || "-",
+        sale.customerReference || "-",
+        formatCurrency(sale.amount)
+      ]);
+
+      autoTable(pdf, {
+        startY: 115,
+        head: [["Hora", "Serviço", "Referência", "Valor"]],
+        body: tableRows,
+        theme: "grid",
+        styles: {
+          font: "helvetica",
+          fontSize: 8.5,
+          cellPadding: 3,
+          textColor: [45, 50, 58],
+          lineColor: [220, 224, 230],
+          lineWidth: 0.2
+        },
+        headStyles: {
+          fillColor: [17, 21, 27],
+          textColor: [255, 255, 255],
+          fontStyle: "bold"
+        },
+        alternateRowStyles: {
+          fillColor: [248, 249, 251]
+        },
+        columnStyles: {
+          0: { cellWidth: 25 },
+          1: { cellWidth: 60 },
+          2: { cellWidth: 55 },
+          3: { cellWidth: 36, halign: "right" }
+        },
+        didParseCell: (data) => {
+          if (data.section === "body" && data.column.index === 3) {
+            data.cell.styles.textColor = [20, 140, 90];
+            data.cell.styles.fontStyle = "bold";
+          }
+        },
+        margin: {
+          left: 14,
+          right: 14,
+          bottom: 20
+        }
+      });
+
+      // Rodapé em todas as páginas
+      const pageCount = pdf.getNumberOfPages();
+
+      for (let page = 1; page <= pageCount; page++) {
+        pdf.setPage(page);
+
+        pdf.setDrawColor(225, 228, 233);
+        pdf.line(14, pageHeight - 15, pageWidth - 14, pageHeight - 15);
+
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(120, 126, 135);
+
+        pdf.text(
+          "EMATEA • Extrato de transações • Documento gerado pelo sistema",
+          14,
+          pageHeight - 9
+        );
+
+        pdf.text(
+          `Página ${page} de ${pageCount}`,
+          pageWidth - 14,
+          pageHeight - 9,
+          { align: "right" }
+        );
+      }
+
+      const safeAgentName = (selectedSubAgentName || `sub-agente-${selectedSubAgent}`)
+        .trim()
+        .replace(/[^a-zA-Z0-9À-ÿ]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .toLowerCase();
+
+      pdf.save(`extrato-diario-${safeAgentName}-${selectedDate}.pdf`);
+
+      toast.success("Extrato PDF exportado com sucesso.");
+    } catch (error) {
+      console.error("Erro ao exportar extrato para PDF:", error);
+      toast.error("Não foi possível gerar o PDF.");
+    }
+  }
+
+  /* =====================================================
      RENDER
   ===================================================== */
 
@@ -408,6 +592,17 @@ export default function CommissionCalendarPage() {
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
+
+            <button
+              type="button"
+              onClick={exportToPDF}
+              disabled={!selectedSubAgent || !dailyData?.sales?.length || loading}
+              title="Exportar extrato para PDF"
+              className="h-11 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-[#161B22] disabled:text-gray-600 disabled:border-white/5 text-white border border-blue-500/30 flex items-center justify-center gap-2 text-xs md:text-sm font-semibold transition active:scale-95 disabled:cursor-not-allowed"
+            >
+              <DownloadSimple size={18} weight="bold" />
+              <span className="hidden sm:inline">Exportar PDF</span>
+            </button>
 
             <div className="relative w-full md:w-[280px]">
 
