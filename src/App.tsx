@@ -29,6 +29,7 @@ import ClientCommissionsPage from "./pages/admin/ClientCommissionsPage";
 import SubAgentSalariesPage from "./pages/admin/SubAgentSalariesPage";
 import SalesAndCommissionsReport from "./pages/SalesAndCommissionsReport";
 import Calendar from "./pages/admin/Calendar";
+import ExchangeRatesPage from "./pages/admin/ExchangeRatesPage"
 
 export default function App() {
   return (
@@ -81,6 +82,7 @@ export default function App() {
           <Route path="notifications" element={<Notifications />} />
           <Route path="gift" element={<AdminGift />} />
           <Route path="finance" element={<AdminFinance />} />
+          <Route path="exchange-rates" element={<ExchangeRatesPage />} />
           <Route path="logs" element={<AdminLogs />} />
           <Route path="partners" element={<AdminPartners />} />
           <Route path="kyc" element={<AdminKYCPage />} />

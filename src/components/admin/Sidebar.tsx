@@ -137,6 +137,18 @@ export default function Sidebar() {
           </SidebarLink>
 
           <SidebarLink
+            to="/admin/exchange-rates"
+            icon={
+             <DollarSign
+               size={18}
+               className="text-yellow-400"
+             />
+            }
+        >
+          Taxas de Câmbio
+        </SidebarLink>
+
+          <SidebarLink
             to="/admin/banks"
             icon={<Building2 size={18} />}
           >
