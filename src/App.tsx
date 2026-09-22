@@ -30,6 +30,9 @@ import SubAgentSalariesPage from "./pages/admin/SubAgentSalariesPage";
 import SalesAndCommissionsReport from "./pages/SalesAndCommissionsReport";
 import Calendar from "./pages/admin/Calendar";
 import ExchangeRatesPage from "./pages/admin/ExchangeRatesPage"
+import Clients from "./pages/admin/Clients"
+
+import AdminAccountDeletion from "./pages/admin/AdminAccountDeletion"
 
 export default function App() {
   return (
@@ -69,11 +72,21 @@ export default function App() {
             </ProtectedRoute>
           }
         >
+
+          <Route
+            path="/admin/account-deletion"
+            element={
+              <ProtectedRoute>
+                <AdminAccountDeletion />
+              </ProtectedRoute>
+           }
+         />
           {/* DASHBOARD */}
           <Route index element={<Dashboard />} />
 
           {/* CORE */}
           <Route path="users" element={<Users />} />
+          <Route path="clients" element={<Clients />} />
           <Route path="recharges" element={<Recharges />} />
           <Route path="withdrawals" element={<Withdrawals />} />
           <Route path="banks" element={<Banks />} />
@@ -97,10 +110,7 @@ export default function App() {
           <Route path="wallet" element={<EmateaWalletPage />} />
           <Route path="commissions/clients" element={<ClientCommissionsPage />} />
 
-          <Route
-  path="commissions/calendar"
-  element={<Calendar />}
-/>
+          <Route path="commissions/calendar" element={<Calendar />} />
           
           {/* CONTA 5LINHAS / AKI */}
           <Route path="aki" element={<AkiDashboardPage />} />

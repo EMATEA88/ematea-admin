@@ -16,7 +16,8 @@ import {
   Wallet,
   DollarSign,
   BarChart3,
-  CalendarDays
+  CalendarDays,
+  Trash2,
 } from "lucide-react"
 
 const sectionTitle =
@@ -74,6 +75,13 @@ export default function Sidebar() {
             icon={<Users size={18} />}
           >
             Utilizadores
+          </SidebarLink>
+
+          <SidebarLink
+            to="/admin/clients"
+            icon={<Users size={18} />}
+          >
+            Clientes
           </SidebarLink>
 
           <SidebarLink
@@ -289,6 +297,13 @@ export default function Sidebar() {
             icon={<Gift size={18} />}
           >
             Gift
+          </SidebarLink>
+
+          <SidebarLink
+            to="/admin/account-deletion"
+            icon={<Trash2 size={18} />}
+          >
+            Eliminar Utilizador
           </SidebarLink>
 
 
