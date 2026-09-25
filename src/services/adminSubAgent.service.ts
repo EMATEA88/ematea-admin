@@ -56,9 +56,14 @@ export interface SubAgent {
     createdAt: string
   }
 
-  supervisor?: {
+    supervisor?: {
     id: number
     fullName: string
+  }
+
+  createdBy?: {
+    id: number
+    role: string
   }
 }
 

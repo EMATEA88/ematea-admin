@@ -100,8 +100,7 @@ export default function SubAgentsManager() {
   // ================= PESQUISA E FILTRAGEM (MEMO) =================
   const filtered = useMemo(() => {
     const term = search.toLowerCase()
-    
-    // 1. Filtrar primeiro por Texto de Pesquisa
+
     let result = subAgents.filter(item =>
       item.user.fullName.toLowerCase().includes(term) ||
       item.user.phone.includes(term) ||
@@ -110,25 +109,35 @@ export default function SubAgentsManager() {
       (item.workstation ?? "").toLowerCase().includes(term)
     )
 
-    // 2. Filtrar pelo Tipo selecionado nas Abas
     if (activeType === "INTERNAL") {
-      // Sem supervisor ou agente associado = Interno da Sede/Posto
-      result = result.filter(sub => !sub.supervisor && !(sub as any).agentId && !(sub as any).supervisorId)
-    } else if (activeType === "AGENT_FIELD") {
-      // Com supervisor ou agente associado = Rede de Campo
-      result = result.filter(sub => sub.supervisor || (sub as any).agentId || (sub as any).supervisorId)
+      result = result.filter(
+        sub => sub.createdBy?.role === "ADMIN"
+      )
+    }
+
+    if (activeType === "AGENT_FIELD") {
+      result = result.filter(
+        sub => sub.createdBy?.role === "AGENT"
+      )
     }
 
     return result
   }, [search, subAgents, activeType])
 
-  // ================= CARDS STATS =================
+  // ================= CARDS STATS & LISTAS =================
   const total = subAgents.length
   const active = subAgents.filter(i => i.isActive).length
   const inactive = total - active
   const workstations = new Set(
     subAgents.map(i => i.workstation).filter(Boolean)
   ).size
+
+  const emateaSubAgents = filtered.filter(
+    sub => sub.createdBy?.role === "ADMIN"
+  )
+  const agentSubAgents = filtered.filter(
+    sub => sub.createdBy?.role === "AGENT"
+  )
 
   // ================= ACTIONS =================
   async function activate(id: number) {
@@ -150,6 +159,131 @@ export default function SubAgentsManager() {
       toast.error("Erro ao desativar sub-agente.")
     }
   }
+
+  // ================= COMPONENTE AUXILIAR DE LINHAS =================
+  const renderSubAgentRows = (items: SubAgent[]) =>
+    items.map(sub => (
+      <tr
+        key={sub.id}
+        className="hover:bg-white/[0.02] transition-colors group"
+      >
+        <td className="px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/[0.02] border border-white/[0.04] flex items-center justify-center text-gray-400 group-hover:text-cyan-400 group-hover:border-cyan-500/20 transition-all">
+              <UserCircle2 size={18} strokeWidth={1.5} />
+            </div>
+
+            <div className="min-w-0">
+              <span className="font-bold text-white block capitalize truncate">
+                {sub.user.fullName?.toLowerCase()}
+              </span>
+
+              <span className="text-[9px] font-mono text-gray-600 block">
+                REF #{sub.user.publicId}
+              </span>
+            </div>
+          </div>
+        </td>
+
+        <td className="px-4 py-4 font-mono text-gray-400 text-[11px]">
+          {sub.employeeCode}
+        </td>
+
+        <td className="px-4 py-4">
+          <div className="space-y-0.5 text-gray-400 font-mono text-[11px]">
+            <div className="flex items-center gap-1.5">
+              <Phone size={11} className="text-gray-600" />
+              {sub.user.phone}
+            </div>
+
+            {sub.user.email && (
+              <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+                <Mail size={11} className="text-gray-600" />
+                {sub.user.email}
+              </div>
+            )}
+          </div>
+        </td>
+
+        <td className="px-4 py-4 text-gray-300">
+          {sub.workstation || (
+            <span className="text-gray-600">-</span>
+          )}
+        </td>
+
+        <td className="px-4 py-4 text-gray-300">
+          {sub.position || (
+            <span className="text-gray-600">-</span>
+          )}
+        </td>
+
+        <td className="px-4 py-4 text-gray-400 capitalize">
+          {sub.supervisor?.fullName?.toLowerCase() || (
+            <span className="text-[10px] text-cyan-500/70 font-mono font-bold uppercase tracking-wider">
+              Sede Central
+            </span>
+          )}
+        </td>
+
+        <td className="px-4 py-4 text-center">
+          {sub.isActive ? (
+            <span className="inline-flex text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Ativo
+            </span>
+          ) : (
+            <span className="inline-flex text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
+              Inativo
+            </span>
+          )}
+        </td>
+
+        <td className="px-6 py-4">
+          <div className="flex items-center justify-center gap-1.5">
+            <button
+              onClick={() => openDetails(sub.id)}
+              title="Visualizar Detalhes"
+              className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-white hover:bg-white/[0.06] transition-all"
+            >
+              <Eye size={13} />
+            </button>
+
+            <button
+              onClick={() => openEdit(sub.id)}
+              title="Editar Sub-agente"
+              className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-cyan-400 hover:bg-cyan-500/5 transition-all"
+            >
+              <Pencil size={13} />
+            </button>
+
+            {sub.isActive ? (
+              <button
+                onClick={() => deactivate(sub.id)}
+                title="Desativar Conta"
+                className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-rose-400 hover:bg-rose-500/5 transition-all"
+              >
+                <ShieldX size={13} />
+              </button>
+            ) : (
+              <button
+                onClick={() => activate(sub.id)}
+                title="Ativar Conta"
+                className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/5 transition-all"
+              >
+                <ShieldCheck size={13} />
+              </button>
+            )}
+
+            <button
+              onClick={() => openResetPin(sub.id)}
+              title="Redefinir PIN de Segurança"
+              className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-amber-400 hover:bg-amber-500/5 transition-all"
+            >
+              <KeyRound size={13} />
+            </button>
+          </div>
+        </td>
+      </tr>
+    ))
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto font-sans antialiased text-[#EAECEF]">
@@ -224,7 +358,7 @@ export default function SubAgentsManager() {
                 : "text-gray-500 hover:text-cyan-400/70"
             }`}
           >
-            Internos EMATEA ({subAgents.filter(s => !s.supervisor).length})
+            Internos EMATEA ({subAgents.filter(s => s.createdBy?.role === "ADMIN").length})
           </button>
           
           <button
@@ -235,7 +369,7 @@ export default function SubAgentsManager() {
                 : "text-gray-500 hover:text-blue-400/70"
             }`}
           >
-            Sub-Agentes de Campo ({subAgents.filter(s => s.supervisor).length})
+            Sub-Agentes de Campo ({subAgents.filter(s => s.createdBy?.role === "AGENT").length})
           </button>
         </div>
 
@@ -256,166 +390,108 @@ export default function SubAgentsManager() {
         </div>
       </div>
 
-      {/* ================= DATA GRID / TABLE ================= */}
-      <div className="bg-[#161A1E] rounded-[2rem] border border-white/[0.04] overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="border-b border-white/[0.03] bg-[#111418]/60 text-[10px] font-black uppercase tracking-widest text-gray-500">
-                <th className="px-6 py-4.5">Funcionário</th>
-                <th className="px-4 py-4.5 font-mono">Código</th>
-                <th className="px-4 py-4.5">Contactos</th>
-                <th className="px-4 py-4.5">Posto</th>
-                <th className="px-4 py-4.5">Cargo</th>
-                <th className="px-4 py-4.5">Supervisor</th>
-                <th className="px-4 py-4.5 text-center">Estado</th>
-                <th className="px-6 py-4.5 text-center">Ações de Conta</th>
-              </tr>
-            </thead>
-            
-            <tbody className="text-xs font-medium divide-y divide-white/[0.02]">
-              {loading && (
-                <tr>
-                  <td colSpan={8} className="p-16 text-center text-gray-500 font-mono text-[11px] uppercase tracking-wider">
-                    Carregando base de dados dos operadores...
-                  </td>
+      {/* ================= SEÇÃO 1: SUB-AGENTES EMATEA ================= */}
+      {(activeType === "ALL" || activeType === "INTERNAL") && (
+        <div className="rounded-[2rem] overflow-hidden border border-blue-500/20 bg-[#0B1733] shadow-2xl">
+          <div className="px-6 py-5 border-b border-blue-400/10 bg-[#0F1D3D]">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-widest text-white">
+                  Sub-Agentes da EMATEA
+                </h2>
+                <p className="text-[10px] text-blue-300/60 uppercase tracking-wider mt-1">
+                  Operadores criados diretamente pela EMATEA
+                </p>
+              </div>
+
+              <span className="px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-400/10 text-blue-300 text-[10px] font-black font-mono">
+                {emateaSubAgents.length}
+              </span>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b border-blue-400/10 bg-[#0D1935] text-[10px] font-black uppercase tracking-widest text-blue-300/60">
+                  <th className="px-6 py-4.5">Funcionário</th>
+                  <th className="px-4 py-4.5 font-mono">Código</th>
+                  <th className="px-4 py-4.5">Contactos</th>
+                  <th className="px-4 py-4.5">Posto</th>
+                  <th className="px-4 py-4.5">Cargo</th>
+                  <th className="px-4 py-4.5">Supervisor</th>
+                  <th className="px-4 py-4.5 text-center">Estado</th>
+                  <th className="px-6 py-4.5 text-center">Ações</th>
                 </tr>
-              )}
+              </thead>
 
-              {!loading && filtered.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="p-16 text-center text-gray-600 font-mono text-[11px] uppercase tracking-wider">
-                    Nenhum operador localizado para este filtro.
-                  </td>
-                </tr>
-              )}
-
-              {!loading && filtered.map(sub => (
-                <tr key={sub.id} className="hover:bg-white/[0.01] transition-colors group">
-                  
-                  {/* COMPONENTE NOME */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-white/[0.02] border border-white/[0.04] flex items-center justify-center text-gray-400 group-hover:text-cyan-400 group-hover:border-cyan-500/20 transition-all">
-                        <UserCircle2 size={18} strokeWidth={1.5} />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="font-bold text-white block capitalize truncate">
-                          {sub.user.fullName?.toLowerCase()}
-                        </span>
-                        <span className="text-[9px] font-mono text-gray-600 block">
-                          REF #{sub.user.publicId}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* CÓDIGO */}
-                  <td className="px-4 py-4 font-mono text-gray-400 text-[11px]">
-                    {sub.employeeCode}
-                  </td>
-
-                  {/* CONTACTOS */}
-                  <td className="px-4 py-4">
-                    <div className="space-y-0.5 text-gray-400 font-mono text-[11px]">
-                      <div className="flex items-center gap-1.5">
-                        <Phone size={11} className="text-gray-600" />
-                        {sub.user.phone}
-                      </div>
-                      {sub.user.email && (
-                        <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
-                          <Mail size={11} className="text-gray-600" />
-                          {sub.user.email}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-
-                  {/* POSTO */}
-                  <td className="px-4 py-4 text-gray-300">
-                    {sub.workstation || <span className="text-gray-600">-</span>}
-                  </td>
-
-                  {/* CARGO */}
-                  <td className="px-4 py-4 text-gray-300">
-                    {sub.position || <span className="text-gray-600">-</span>}
-                  </td>
-
-                  {/* SUPERVISOR */}
-                  <td className="px-4 py-4 text-gray-400 capitalize">
-                    {sub.supervisor?.fullName?.toLowerCase() || (
-                      <span className="text-[10px] text-cyan-500/70 font-mono font-bold uppercase tracking-wider">
-                        Sede Central
-                      </span>
-                    )}
-                  </td>
-
-                  {/* ESTADO */}
-                  <td className="px-4 py-4 text-center">
-                    {sub.isActive ? (
-                      <span className="inline-flex text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        Ativo
-                      </span>
-                    ) : (
-                      <span className="inline-flex text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                        Inativo
-                      </span>
-                    )}
-                  </td>
-
-                  {/* AÇÕES DE CONTA */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <button
-                        onClick={() => openDetails(sub.id)}
-                        title="Visualizar Detalhes"
-                        className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-white hover:bg-white/[0.06] transition-all"
-                      >
-                        <Eye size={13} />
-                      </button>
-
-                      <button
-                        onClick={() => openEdit(sub.id)}
-                        title="Editar Sub-agente"
-                        className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-cyan-400 hover:bg-cyan-500/5 transition-all"
-                      >
-                        <Pencil size={13} />
-                      </button>
-
-                      {sub.isActive ? (
-                        <button
-                          onClick={() => deactivate(sub.id)}
-                          title="Desativar Conta"
-                          className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-rose-400 hover:bg-rose-500/5 transition-all"
-                        >
-                          <ShieldX size={13} />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => activate(sub.id)}
-                          title="Ativar Conta"
-                          className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/5 transition-all"
-                        >
-                          <ShieldCheck size={13} />
-                        </button>
-                      )}
-
-                      <button
-                        onClick={() => openResetPin(sub.id)}
-                        title="Redefinir PIN de Segurança"
-                        className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] text-gray-400 hover:text-amber-400 hover:bg-amber-500/5 transition-all"
-                      >
-                        <KeyRound size={13} />
-                      </button>
-                    </div>
-                  </td>
-
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              <tbody className="text-xs font-medium divide-y divide-blue-400/[0.04]">
+                {!loading && emateaSubAgents.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-12 text-center text-blue-300/40 font-mono text-[11px] uppercase tracking-wider">
+                      Nenhum sub-agente da EMATEA localizado.
+                    </td>
+                  </tr>
+                ) : (
+                  renderSubAgentRows(emateaSubAgents)
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* ================= SEÇÃO 2: SUB-AGENTES DOS AGENTES ================= */}
+      {(activeType === "ALL" || activeType === "AGENT_FIELD") && (
+        <div className="rounded-[2rem] overflow-hidden border border-white/[0.04] bg-[#161A1E] shadow-2xl">
+          <div className="px-6 py-5 border-b border-white/[0.04] bg-[#111418]/60">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-widest text-white">
+                  Sub-Agentes dos Agentes
+                </h2>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1">
+                  Operadores pertencentes à rede de agentes
+                </p>
+              </div>
+
+              <span className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05] text-gray-400 text-[10px] font-black font-mono">
+                {agentSubAgents.length}
+              </span>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b border-white/[0.03] bg-[#111418]/60 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                  <th className="px-6 py-4.5">Funcionário</th>
+                  <th className="px-4 py-4.5 font-mono">Código</th>
+                  <th className="px-4 py-4.5">Contactos</th>
+                  <th className="px-4 py-4.5">Posto</th>
+                  <th className="px-4 py-4.5">Cargo</th>
+                  <th className="px-4 py-4.5">Supervisor</th>
+                  <th className="px-4 py-4.5 text-center">Estado</th>
+                  <th className="px-6 py-4.5 text-center">Ações</th>
+                </tr>
+              </thead>
+
+              <tbody className="text-xs font-medium divide-y divide-white/[0.02]">
+                {!loading && agentSubAgents.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-12 text-center text-gray-600 font-mono text-[11px] uppercase tracking-wider">
+                      Nenhum sub-agente de agente localizado.
+                    </td>
+                  </tr>
+                ) : (
+                  renderSubAgentRows(agentSubAgents)
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
