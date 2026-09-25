@@ -16,16 +16,26 @@ export default function SubAgentSalariesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchSubAgents = async () => {
-    try {
-      setLoading(true);
-      const data = await AdminSubAgentService.getAll();
-      setSubAgents(data);
-    } catch (error) {
-      console.error("Erro ao carregar sub-agentes:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+
+    const data = await AdminSubAgentService.getAll();
+
+    // Nesta página entram apenas os sub-agentes
+    // criados diretamente pela EMATEA.
+    // Sub-agentes pertencentes a agentes ficam fora
+    // deste fluxo de salários.
+    const emateaSubAgents = data.filter(
+      (agent) => agent.createdBy?.role !== "AGENT"
+    );
+
+    setSubAgents(emateaSubAgents);
+  } catch (error) {
+    console.error("Erro ao carregar sub-agentes:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchSubAgents();
