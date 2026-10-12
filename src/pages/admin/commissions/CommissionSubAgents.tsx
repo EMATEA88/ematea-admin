@@ -88,7 +88,7 @@ export default function CommissionSubAgentsPage() {
       <div
         className={
           isEmateaSection
-            ? "bg-[#0E1B3D] rounded-[2rem] border border-blue-500/30 overflow-hidden shadow-xl"
+            ? "bg-[#161A1F] rounded-[2rem] border border-white/5 overflow-hidden shadow-xl"
             : "bg-[#161A1F] rounded-[2rem] border border-white/5 overflow-hidden shadow-xl"
         }
       >
@@ -96,7 +96,7 @@ export default function CommissionSubAgentsPage() {
         <div
           className={
             isEmateaSection
-              ? "px-6 py-5 bg-[#10234F] border-b border-blue-500/20"
+              ? "bg-[#161A1F] rounded-[2rem] border border-white/5 overflow-hidden shadow-xl"
               : "px-6 py-5 bg-[#181C21] border-b border-white/5"
           }
         >
