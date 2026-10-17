@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast"
 import AdminLayout from "./layouts/AdminLayout"
 import ProtectedRoute from "./components/admin/ProtectedRoute"
 
+import AkiReportsPage from './pages/admin/AkiReportsPage';
 import Dashboard from "./pages/admin/Dashboard"
 import Users from "./pages/admin/Users"
 import Recharges from "./pages/admin/Recharges"
@@ -114,6 +115,8 @@ export default function App() {
           
           {/* CONTA 5LINHAS / AKI */}
           <Route path="aki" element={<AkiDashboardPage />} />
+          <Route path="aki" element={<AkiDashboardPage />} />
+          <Route path="aki/reports" element={<AkiReportsPage />} />
 
           {/* SERVICES */}
           <Route path="services" element={<AdminServiceRequests />} />

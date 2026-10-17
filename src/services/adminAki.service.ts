@@ -1,7 +1,24 @@
+
 import { api } from "./api";
 
-export const adminAkiService = {
+export interface AkiReportParams {
+  DateStart?: string;
+  DateEnd?: string | null;
+  Page?: number | null;
+  PageItems?: number | null;
+}
 
+/** Parâmetros dos históricos AKI */
+export interface AkiHistoryParams {
+  page?: number;
+  limit?: number;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  search?: string;
+}
+
+export const adminAkiService = {
   /**
    * Informações da conta AKI
    */
@@ -19,114 +36,87 @@ export const adminAkiService = {
   },
 
   /**
-   * =========================================================
-   * AUDITORIA AKI
-   * =========================================================
+   * Sincronização do catálogo de produtos AKI
    */
+  async syncProducts() {
+    const response = await api.post("/admin/aki/sync");
+    return response.data;
+  },
 
   /**
-   * Resumo da auditoria
-   *
-   * Retorna:
-   * {
-   *   total,
-   *   consistent,
-   *   inconsistent
-   * }
+   * Histórico de transações financeiras EMATEA
+   */
+  async getTransactionHistory(params?: AkiHistoryParams) {
+    const response = await api.get(
+      "/admin/aki/history/transactions",
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
+   * Histórico de solicitações de serviço
+   */
+  async getServiceRequestHistory(params?: AkiHistoryParams) {
+    const response = await api.get(
+      "/admin/aki/history/requests",
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
+   * AUDITORIA AKI
    */
   async getAuditSummary() {
     const response = await api.get("/admin/aki/audit/summary");
     return response.data;
   },
 
-  /**
-   * Compras atualmente pendentes
-   *
-   * Importante:
-   * Este endpoint consulta somente PENDING / IN_PROGRESS.
-   */
   async getAuditPending() {
     const response = await api.get("/admin/aki/audit/pending");
     return response.data;
   },
 
-  /**
-   * Compras com inconsistências
-   */
   async getAuditInconsistencies() {
     const response = await api.get(
       "/admin/aki/audit/inconsistencies"
     );
-
     return response.data;
   },
 
   /**
-   * Relatório de Compras
+   * Relatórios
    */
-  async getPurchaseReport(data?: {
-    DateStart?: string;
-    DateEnd?: string | null;
-    Page?: number | null;
-    PageItems?: number | null;
-  }) {
+  async getPurchaseReport(data?: AkiReportParams) {
     const response = await api.post(
       "/admin/aki/reports/purchases",
-      data
+      data ?? {}
     );
-
     return response.data;
   },
 
-  /**
-   * Relatório de Depósitos
-   */
-  async getDepositReport(data?: {
-    DateStart?: string;
-    DateEnd?: string | null;
-    Page?: number | null;
-    PageItems?: number | null;
-  }) {
+  async getDepositReport(data?: AkiReportParams) {
     const response = await api.post(
       "/admin/aki/reports/deposits",
-      data
+      data ?? {}
     );
-
     return response.data;
   },
 
-  /**
-   * Relatório de Transferências
-   */
-  async getTransferReport(data?: {
-    DateStart?: string;
-    DateEnd?: string | null;
-    Page?: number | null;
-    PageItems?: number | null;
-  }) {
+  async getTransferReport(data?: AkiReportParams) {
     const response = await api.post(
       "/admin/aki/reports/transfers",
-      data
+      data ?? {}
     );
-
     return response.data;
   },
 
-  /**
-   * Relatório de Pagamentos
-   */
-  async getPaymentReport(data?: {
-    DateStart?: string;
-    DateEnd?: string | null;
-    Page?: number | null;
-    PageItems?: number | null;
-  }) {
+  async getPaymentReport(data?: AkiReportParams) {
     const response = await api.post(
       "/admin/aki/reports/payments",
-      data
+      data ?? {}
     );
-
     return response.data;
-  }
-
+  },
 };

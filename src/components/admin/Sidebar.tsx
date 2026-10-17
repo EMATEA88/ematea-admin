@@ -160,6 +160,10 @@ export default function Sidebar() {
             Conta 5Linhas
           </SidebarLink>
 
+          <SidebarLink to="/admin/aki/reports" icon={<FileText size={18} className="text-cyan-400" />}>
+             Relatórios 5Linhas
+          </SidebarLink>
+
           <SidebarLink to="/admin/redotpay" icon={<Wallet size={18} className="text-blue-400" />}>
             RedotPay
           </SidebarLink>
