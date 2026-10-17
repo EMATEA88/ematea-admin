@@ -135,7 +135,7 @@ export default function Sidebar() {
           </SidebarLink>
 
           <SidebarLink to="/admin/commissions/calendar" icon={<CalendarDays size={18} className="text-cyan-400" />}>
-            Calendário de Vendas
+            Calendário Geral
           </SidebarLink>
 
           <SidebarLink to="/admin/commissions/clients" icon={<Percent size={18} />}>

@@ -119,4 +119,9 @@ export const adminAkiService = {
     );
     return response.data;
   },
+
+  async runAudit() {
+  const response = await api.post("/admin/aki/audit/run");
+  return response.data;
+},
 };

@@ -168,6 +168,28 @@ export const AdminCommissionService = {
   },
 
   /* =====================================================
+     GRÁFICOS AGENTES E CLIENTES
+  ===================================================== */
+
+  async getAgentDailySales(agentUserId: number, date: string) {
+  const response = await api.get(
+    "/admin/commissions/calendar/agents/daily",
+    { params: { agentUserId, date } }
+  );
+
+  return response.data?.data ?? response.data;
+},
+
+async getClientDailyPurchases(clientUserId: number, date: string) {
+  const response = await api.get(
+    "/admin/commissions/calendar/clients/daily",
+    { params: { clientUserId, date } }
+  );
+
+  return response.data?.data ?? response.data;
+},
+
+  /* =====================================================
      GRÁFICOS
   ===================================================== */
 
