@@ -16,15 +16,18 @@ interface AuditResult {
   providerMessage: string | null;
   consistent: boolean;
   providerResponse?: any;
+  isSandbox?: boolean;
 }
 
 const unwrap = (response: any) => response?.data ?? response;
 const norm = (value: unknown) => String(value ?? "").trim().toUpperCase();
 const isReconciliation = (item: AuditResult) =>
+  !item.isSandbox &&
   norm(item.localStatus) === "PROVIDER_TIMEOUT" &&
   ["SUCCESS", "RUNNING"].includes(norm(item.providerStatus));
 const isPending = (item: AuditResult) =>
-  ["PENDING", "IN_PROGRESS", "RUNNING", "PROVIDER_TIMEOUT"].includes(norm(item.localStatus)) || isReconciliation(item);
+  !item.isSandbox &&
+  (["PENDING", "IN_PROGRESS", "RUNNING", "PROVIDER_TIMEOUT"].includes(norm(item.localStatus)) || isReconciliation(item));
 const isUnverifiable = (item: AuditResult) => item.providerStatus == null || String(item.providerStatus).trim() === "";
 const formatStatus = (value: unknown) => value == null || value === "" ? "Não confirmado" : String(value);
 const formatDate = (value?: string | null) => {
@@ -85,7 +88,7 @@ export default function AkiAuditPage({ data }: Props) {
     if (!audit || typeof audit !== "object") throw new Error("A resposta do servidor não contém dados de auditoria.");
     const history: AuditResult[] = Array.isArray(audit.history) ? audit.history : Array.isArray(audit.results) ? audit.results : [];
     const derivedPending = history.filter(isPending);
-    const derivedInconsistencies = history.filter(item => !item.consistent && !isReconciliation(item) && !isUnverifiable(item));
+    const derivedInconsistencies = history.filter(item => !item.isSandbox && !item.consistent && !isReconciliation(item) && !isUnverifiable(item));
     setSummary(audit.summary ?? null);
     setPending(Array.isArray(audit.pending) ? audit.pending : derivedPending);
     setInconsistencies(Array.isArray(audit.inconsistencies) ? audit.inconsistencies : derivedInconsistencies);
@@ -127,9 +130,9 @@ export default function AkiAuditPage({ data }: Props) {
 
   const matchesSearch = useCallback((item: AuditResult) => {
     const term = search.trim().toLowerCase();
-    const textMatch = !term || [item.serviceRequestId, item.orderId, item.transactionId, item.localStatus, item.providerStatus, item.providerCode, item.providerMessage]
+    const textMatch = !term || [item.serviceRequestId, item.orderId, item.transactionId, item.localStatus, item.providerStatus, item.providerCode, item.providerMessage, item.isSandbox ? "sandbox teste" : ""]
       .some(value => String(value ?? "").toLowerCase().includes(term));
-    const stateMatch = statusFilter === "ALL" || norm(item.localStatus) === statusFilter || norm(item.providerStatus) === statusFilter;
+    const stateMatch = statusFilter === "ALL" || norm(item.localStatus) === statusFilter || norm(item.providerStatus) === statusFilter || (statusFilter === "SANDBOX" && item.isSandbox === true);
     return textMatch && stateMatch;
   }, [search, statusFilter]);
 
@@ -150,7 +153,8 @@ export default function AkiAuditPage({ data }: Props) {
   const consistent = Number(summary?.consistent ?? audits.filter(item => item.consistent).length);
   const reconciliationCount = Number(summary?.reconciliation ?? pending.filter(isReconciliation).length);
   const inconsistent = Number(summary?.inconsistencies ?? summary?.inconsistent ?? inconsistencies.length);
-  const unverifiable = Number(summary?.unverifiable ?? audits.filter(isUnverifiable).length);
+  const unverifiable = Number(summary?.unverifiable ?? audits.filter(item => !item.isSandbox && isUnverifiable(item)).length);
+  const sandboxCount = Number(summary?.sandbox ?? audits.filter(item => item.isSandbox).length);
 
   if (loading && audits.length === 0 && !summary && !running) return <div className="bg-[#161A1F] border border-white/5 rounded-[2rem] p-16 flex flex-col items-center justify-center gap-4 my-12"><Cpu className="animate-spin text-blue-400" size={32}/><span className="text-xs font-black uppercase tracking-widest text-gray-400">A carregar dados da auditoria...</span></div>;
 
@@ -172,14 +176,15 @@ export default function AkiAuditPage({ data }: Props) {
     <section className="rounded-2xl bg-[#161A1F] border border-white/5 p-4"><div className="grid grid-cols-1 md:grid-cols-3 gap-3">
       <div className="relative md:col-span-2"><MagnifyingGlass size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"/><input type="search" value={search} onChange={e => {setSearch(e.target.value); resetPages();}} placeholder="Pesquisar ID, Order ID, transação ou mensagem..." className="w-full rounded-xl bg-black/20 border border-white/10 pl-10 pr-4 py-3 text-sm text-white placeholder:text-gray-600 outline-none focus:border-blue-500"/></div>
       <div className="relative"><Funnel size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"/><select value={statusFilter} onChange={e => {setStatusFilter(e.target.value); resetPages();}} className="w-full appearance-none rounded-xl bg-[#111418] border border-white/10 pl-10 pr-4 py-3 text-sm text-white outline-none focus:border-blue-500">
-        <option value="ALL">Todos os estados</option><option value="COMPLETED">Concluídas</option><option value="SUCCESS">Sucesso na operadora</option><option value="PENDING">Pendentes</option><option value="IN_PROGRESS">Em processamento</option><option value="RUNNING">Em execução</option><option value="PROVIDER_TIMEOUT">Timeout da operadora</option><option value="FAILED">Falhadas</option><option value="REJECTED">Rejeitadas</option>
+        <option value="ALL">Todos os estados</option><option value="COMPLETED">Concluídas</option><option value="SUCCESS">Sucesso na operadora</option><option value="PENDING">Pendentes</option><option value="IN_PROGRESS">Em processamento</option><option value="RUNNING">Em execução</option><option value="PROVIDER_TIMEOUT">Timeout da operadora</option><option value="FAILED">Falhadas</option><option value="REJECTED">Rejeitadas</option><option value="SANDBOX">Testes Sandbox</option>
       </select></div></div><div className="flex flex-wrap items-center justify-between gap-3 mt-3"><p className="text-xs text-gray-500">{filteredAudits.length} resultados no histórico{search.trim() ? ` para “${search.trim()}”` : ""}</p><div className="flex items-center gap-2 text-xs text-gray-400"><span>Registos por página</span><select value={pageSize} onChange={e => {setPageSize(Number(e.target.value)); resetPages();}} className="rounded-lg bg-[#111418] border border-white/10 px-2 py-2 text-white"><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option><option value={100}>100</option></select></div></div></section>
 
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-6">
       <MetricCard title="Total analisado" value={total} description="Registos devolvidos pela auditoria" icon={<ListMagnifyingGlass size={18}/>} color="blue"/>
-      <MetricCard title="Consistentes" value={consistent} description="Estados considerados consistentes" icon={<ShieldCheck size={18}/>} color="green"/>
+      <MetricCard title="Testes Sandbox" value={sandboxCount} description="Operações identificadas como testes" icon={<Cpu size={18}/>} color="yellow"/>
+      <MetricCard title="Consistentes" value={consistent} description="Estados consistentes, excluindo Sandbox" icon={<ShieldCheck size={18}/>} color="green"/>
       <MetricCard title="Inconsistências" value={inconsistent} description="Divergências fora da reconciliação" icon={<WarningCircle size={18}/>} color="red"/>
-      <MetricCard title="Sem confirmação" value={unverifiable} description="Registos sem estado confirmado da operadora" icon={<ClockCounterClockwise size={18}/>} color="yellow"/>
+      <MetricCard title="Sem confirmação" value={unverifiable} description="Registos sem confirmação, excluindo Sandbox" icon={<ClockCounterClockwise size={18}/>} color="yellow"/>
     </div>
 
     <section className="rounded-[2rem] bg-[#161A1F] border border-white/5 overflow-hidden shadow-xl"><div className="px-6 md:px-8 py-6 border-b border-white/5 flex items-center justify-between gap-3"><div><h3 className="font-black text-sm uppercase tracking-wider text-white">Pendentes de Reconciliação</h3><p className="text-xs text-gray-400 mt-1">Compras que precisam de confirmação entre o estado local e a operadora.</p></div><span className="text-xs font-mono px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">{filteredPending.length} registos{reconciliationCount > 0 ? ` · ${reconciliationCount} timeout(s)` : ""}</span></div>
@@ -192,8 +197,8 @@ export default function AkiAuditPage({ data }: Props) {
       <Pagination page={inconsistencyResult.page} totalPages={inconsistencyResult.totalPages} total={inconsistencyResult.total} pageSize={pageSize} setPage={setInconsistencyPage}/>
     </section>
 
-    <section className="rounded-[2rem] bg-[#161A1F] border border-white/5 overflow-hidden shadow-xl"><div className="px-6 md:px-8 py-6 border-b border-white/5 flex items-center justify-between gap-3"><div><h3 className="font-black text-sm uppercase tracking-wider text-white">Histórico de Auditoria</h3><p className="text-xs text-gray-400 mt-1">Resultados das verificações disponibilizados pelo servidor.</p></div><span className="text-xs font-mono px-3 py-1 rounded-full bg-white/5 text-gray-400 border border-white/5">{filteredAudits.length} registos</span></div>
-      <div className="overflow-x-auto"><table className="w-full text-left border-collapse"><thead><tr className="border-b border-white/5 text-[11px] font-black uppercase tracking-widest text-gray-500 bg-black/20"><th className="py-4 px-6">ID Requisição</th><th className="py-4 px-6">Order ID</th><th className="py-4 px-6">Estado local</th><th className="py-4 px-6">Estado operadora</th><th className="py-4 px-6">Código</th><th className="py-4 px-6">Consistente</th></tr></thead><tbody className="divide-y divide-white/5 text-sm">{historyResult.items.length === 0 ? <tr><td colSpan={6} className="py-10 text-center text-gray-500 text-xs">Nenhum resultado corresponde aos filtros selecionados.</td></tr> : historyResult.items.map((item, index) => <tr key={`${item.serviceRequestId}-${index}`} className="hover:bg-white/[0.02]"><td className="py-4 px-6 font-mono text-xs text-gray-300">#{item.serviceRequestId}</td><td className="py-4 px-6 font-mono text-xs text-gray-400">{item.orderId || "—"}</td><td className="py-4 px-6 text-xs text-gray-300">{formatStatus(item.localStatus)}</td><td className="py-4 px-6 text-xs text-gray-300">{formatStatus(item.providerStatus)}</td><td className="py-4 px-6 font-mono text-xs text-gray-400">{item.providerCode ?? "—"}</td><td className="py-4 px-6">{item.consistent ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-green-500/10 text-green-400 border border-green-500/20"><CheckCircle size={14}/>Sim</span> : <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20"><XCircle size={14}/>Não</span>}</td></tr>)}</tbody></table></div>
+    <section className="rounded-[2rem] bg-[#161A1F] border border-white/5 overflow-hidden shadow-xl"><div className="px-6 md:px-8 py-6 border-b border-white/5 flex items-center justify-between gap-3"><div><h3 className="font-black text-sm uppercase tracking-wider text-white">Histórico de Auditoria</h3><p className="text-xs text-gray-400 mt-1">Histórico completo, incluindo operações identificadas como Sandbox.</p></div><span className="text-xs font-mono px-3 py-1 rounded-full bg-white/5 text-gray-400 border border-white/5">{filteredAudits.length} registos</span></div>
+      <div className="overflow-x-auto"><table className="w-full text-left border-collapse"><thead><tr className="border-b border-white/5 text-[11px] font-black uppercase tracking-widest text-gray-500 bg-black/20"><th className="py-4 px-6">ID Requisição</th><th className="py-4 px-6">Order ID</th><th className="py-4 px-6">Estado local</th><th className="py-4 px-6">Estado operadora</th><th className="py-4 px-6">Código</th><th className="py-4 px-6">Classificação</th><th className="py-4 px-6">Consistente</th></tr></thead><tbody className="divide-y divide-white/5 text-sm">{historyResult.items.length === 0 ? <tr><td colSpan={7} className="py-10 text-center text-gray-500 text-xs">Nenhum resultado corresponde aos filtros selecionados.</td></tr> : historyResult.items.map((item, index) => <tr key={`${item.serviceRequestId}-${index}`} className="hover:bg-white/[0.02]"><td className="py-4 px-6 font-mono text-xs text-gray-300">#{item.serviceRequestId}</td><td className="py-4 px-6 font-mono text-xs text-gray-400">{item.orderId || "—"}</td><td className="py-4 px-6 text-xs text-gray-300">{formatStatus(item.localStatus)}</td><td className="py-4 px-6 text-xs text-gray-300">{formatStatus(item.providerStatus)}</td><td className="py-4 px-6 font-mono text-xs text-gray-400">{item.providerCode ?? "—"}</td><td className="py-4 px-6">{item.isSandbox ? <span className="inline-flex px-3 py-1 rounded-lg text-xs font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">Sandbox / Teste</span> : <span className="inline-flex px-3 py-1 rounded-lg text-xs font-bold bg-white/5 text-gray-400 border border-white/5">Operacional</span>}</td><td className="py-4 px-6">{item.consistent ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-green-500/10 text-green-400 border border-green-500/20"><CheckCircle size={14}/>Sim</span> : <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20"><XCircle size={14}/>Não</span>}</td></tr>)}</tbody></table></div>
       <Pagination page={historyResult.page} totalPages={historyResult.totalPages} total={historyResult.total} pageSize={pageSize} setPage={setHistoryPage}/>
     </section>
   </div>;
