@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AdminCommissionService } from "../services/admin-commission.service";
-import AdminAgentService, { type Agent } from "../services/adminAgent.service";
+import AdminAgentService from "../services/adminAgent.service";
 import AdminSubAgentService, { type SubAgent } from "../services/adminSubAgent.service";
 
 type Tab = "overview" | "agents" | "subagents" | "clients";
