@@ -40,6 +40,7 @@ export default function SubAgentsManager() {
   const [showDetails, setShowDetails] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [showResetPin, setShowResetPin] = useState(false)
+  const [salesUpdating, setSalesUpdating] = useState<number | null>(null)
 
   // ================= LOAD DATA =================
   async function load(isRefresh = false) {
@@ -160,6 +161,35 @@ export default function SubAgentsManager() {
     }
   }
 
+  
+async function toggleSales(sub: SubAgent) {
+  if (salesUpdating === sub.id) return
+
+  setSalesUpdating(sub.id)
+
+  try {
+    if (sub.salesEnabled) {
+      await AdminSubAgentService.disableSales(sub.id)
+      toast.success("Vendas desativadas para este sub-agente.")
+    } else {
+      await AdminSubAgentService.enableSales(sub.id)
+      toast.success("Vendas ativadas para este sub-agente.")
+    }
+
+    await load()
+  } catch (error: any) {
+    const message = error?.response?.data?.error
+
+    if (message === "NOT_EMATEA_SUB_AGENT") {
+      toast.error("Esta ação só é permitida para sub-agentes da EMATEA.")
+    } else {
+      toast.error("Não foi possível alterar o estado das vendas.")
+    }
+  } finally {
+    setSalesUpdating(null)
+  }
+}
+
   // ================= COMPONENTE AUXILIAR DE LINHAS =================
   const renderSubAgentRows = (items: SubAgent[]) =>
     items.map(sub => (
@@ -234,6 +264,30 @@ export default function SubAgentsManager() {
             <span className="inline-flex text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
               Inativo
             </span>
+          )}
+        </td>
+
+        <td className="px-4 py-4 text-center">
+          {sub.createdBy?.role === "ADMIN" ? (
+            <button
+              type="button"
+              onClick={() => toggleSales(sub)}
+              disabled={salesUpdating === sub.id}
+              title={sub.salesEnabled ? "Desativar vendas" : "Ativar vendas"}
+              className={`inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all disabled:opacity-50 ${
+                sub.salesEnabled
+                  ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                  : "border-rose-500/20 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"
+              }`}
+            >
+              {salesUpdating === sub.id
+                ? "Aguarde..."
+                : sub.salesEnabled
+                  ? "Vendas ativas"
+                  : "Vendas bloqueadas"}
+            </button>
+          ) : (
+            <span className="text-gray-600">—</span>
           )}
         </td>
 
@@ -421,6 +475,7 @@ export default function SubAgentsManager() {
                   <th className="px-4 py-4.5">Cargo</th>
                   <th className="px-4 py-4.5">Supervisor</th>
                   <th className="px-4 py-4.5 text-center">Estado</th>
+                  <th className="px-4 py-4.5 text-center">Vendas</th>
                   <th className="px-6 py-4.5 text-center">Ações</th>
                 </tr>
               </thead>
@@ -428,7 +483,7 @@ export default function SubAgentsManager() {
               <tbody className="text-xs font-medium divide-y divide-blue-400/[0.04]">
                 {!loading && emateaSubAgents.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="p-12 text-center text-blue-300/40 font-mono text-[11px] uppercase tracking-wider">
+                    <td colSpan={9} className="p-12 text-center text-blue-300/40 font-mono text-[11px] uppercase tracking-wider">
                       Nenhum sub-agente da EMATEA localizado.
                     </td>
                   </tr>
@@ -472,6 +527,7 @@ export default function SubAgentsManager() {
                   <th className="px-4 py-4.5">Cargo</th>
                   <th className="px-4 py-4.5">Supervisor</th>
                   <th className="px-4 py-4.5 text-center">Estado</th>
+                  <th className="px-4 py-4.5 text-center">Vendas</th>
                   <th className="px-6 py-4.5 text-center">Ações</th>
                 </tr>
               </thead>
@@ -479,7 +535,7 @@ export default function SubAgentsManager() {
               <tbody className="text-xs font-medium divide-y divide-white/[0.02]">
                 {!loading && agentSubAgents.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="p-12 text-center text-gray-600 font-mono text-[11px] uppercase tracking-wider">
+                    <td colSpan={9} className="p-12 text-center text-gray-600 font-mono text-[11px] uppercase tracking-wider">
                       Nenhum sub-agente de agente localizado.
                     </td>
                   </tr>

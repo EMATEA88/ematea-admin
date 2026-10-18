@@ -36,6 +36,7 @@ export interface SubAgent {
   address?: string
   hiredAt?: string
   isActive: boolean
+  salesEnabled: boolean
   createdAt: string
 
   // Campos financeiros e de desempenho
@@ -103,6 +104,20 @@ class AdminSubAgentService {
     const { data } = await api.patch(`/admin/subagents/${id}/deactivate`)
     return data
   }
+
+  async enableSales(id: number) {
+  const { data } = await api.patch(
+    `/admin/subagents/${id}/sales/enable`
+  )
+  return data
+}
+
+async disableSales(id: number) {
+  const { data } = await api.patch(
+    `/admin/subagents/${id}/sales/disable`
+  )
+  return data
+}
 
   async resetPin(id: number, pin: string) {
     const { data } = await api.patch(`/admin/subagents/${id}/reset-pin`, { pin })
