@@ -84,9 +84,6 @@ export default function SalesSettingsPage() {
   }
 
   const hasChanges = limit !== savedLimit;
-  const formattedLimit = Number(savedLimit).toLocaleString("pt-PT", {
-    maximumFractionDigits: 2,
-  });
 
   return (
     <div className="min-h-full space-y-6 p-4 text-gray-200 sm:p-6 lg:p-8">
