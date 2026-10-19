@@ -19,6 +19,7 @@ import {
   CalendarDays,
   Trash2,
   LogOut,
+  Gauge,
 } from "lucide-react"
 
 const sectionTitle =
@@ -82,6 +83,10 @@ export default function Sidebar() {
 
           <SidebarLink to="/admin/subagents" icon={<Users size={18} />}>
             Sub-Agentes
+          </SidebarLink>
+
+          <SidebarLink to="/admin/sales-settings" icon={<Gauge size={18} className="text-emerald-400" />}>
+            Limite de Vendas
           </SidebarLink>
 
           <SidebarLink to="/admin/logs" icon={<FileText size={18} />}>

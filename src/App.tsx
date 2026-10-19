@@ -32,6 +32,7 @@ import SalesAndCommissionsReport from "./pages/SalesAndCommissionsReport";
 import Calendar from "./pages/admin/Calendar";
 import ExchangeRatesPage from "./pages/admin/ExchangeRatesPage"
 import Clients from "./pages/admin/Clients"
+import SalesSettingsPage from "./pages/SalesSettingsPage";
 
 import AdminAccountDeletion from "./pages/admin/AdminAccountDeletion"
 
@@ -102,6 +103,7 @@ export default function App() {
           <Route path="kyc" element={<AdminKYCPage />} />
           <Route path="agents" element={<Agents />} />
           <Route path="subagents" element={<SubAgents />} />
+          <Route path="sales-settings" element={<SalesSettingsPage />} />
           <Route path="/admin/sub-agents/salaries" element={<SubAgentSalariesPage />} />
           <Route path="/admin/reports/sales-commissions" element={<SalesAndCommissionsReport />} />
           
