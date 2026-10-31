@@ -201,15 +201,42 @@ transactions: async (
     userId?: number
   }
 ) => {
+  const safePage = Math.max(
+    1,
+    Math.floor(Number(page) || 1)
+  )
+
+  const safeLimit = Math.min(
+    100,
+    Math.max(1, Math.floor(Number(limit) || 20))
+  )
+
+  const queryParams: {
+    page: number
+    limit: number
+    type?: string
+    userId?: number
+  } = {
+    page: safePage,
+    limit: safeLimit
+  }
+
+  if (params?.type) {
+    queryParams.type = params.type
+  }
+
+  if (
+    params?.userId !== undefined &&
+    Number.isSafeInteger(params.userId) &&
+    params.userId > 0
+  ) {
+    queryParams.userId = params.userId
+  }
 
   const { data } = await api.get(
     "/admin/transactions",
     {
-      params: {
-        page,
-        limit,
-        ...params
-      }
+      params: queryParams
     }
   )
 
@@ -219,18 +246,17 @@ transactions: async (
 transactionSearch: async (
   query: string
 ) => {
+  const normalizedQuery = String(query ?? "").trim()
 
-  if (!query?.trim()) {
-    throw new Error(
-      "SEARCH_QUERY_REQUIRED"
-    )
+  if (!normalizedQuery) {
+    throw new Error("SEARCH_QUERY_REQUIRED")
   }
 
   const { data } = await api.get(
     "/admin/transactions/search",
     {
       params: {
-        q: query.trim()
+        q: normalizedQuery
       }
     }
   )
@@ -241,14 +267,12 @@ transactionSearch: async (
 transactionDetails: async (
   id: number
 ) => {
-
   if (
-    !Number.isInteger(id) ||
-    id <= 0
+    !Number.isSafeInteger(id) ||
+    id <= 0 ||
+    id > 2147483647
   ) {
-    throw new Error(
-      "INVALID_TRANSACTION_ID"
-    )
+    throw new Error("INVALID_TRANSACTION_ID")
   }
 
   const { data } = await api.get(

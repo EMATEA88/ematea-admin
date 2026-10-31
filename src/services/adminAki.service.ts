@@ -18,6 +18,14 @@ export interface AkiHistoryParams {
   search?: string;
 }
 
+/**
+ * Consulta individual de uma ordem diretamente na API AKI.
+ */
+export interface AkiPurchaseOrderQueryParams {
+  Order_ID: string;
+  Transaction_ID?: string;
+}
+
 export const adminAkiService = {
   /**
    * Informações da conta AKI
@@ -119,6 +127,21 @@ export const adminAkiService = {
     );
     return response.data;
   },
+
+  /**
+ * Consulta individual de uma ordem diretamente na AKI.
+ *
+ * Operação exclusivamente de leitura:
+ * não altera vendas, saldos ou transações financeiras.
+ */
+async queryPurchaseOrder(data: AkiPurchaseOrderQueryParams) {
+  const response = await api.post(
+    "/admin/aki/order-query",
+    data
+  );
+
+  return response.data;
+},
 
   async runAudit() {
   const response = await api.post("/admin/aki/audit/run");

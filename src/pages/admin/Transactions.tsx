@@ -106,102 +106,99 @@ export default function AdminTransactions() {
   const [copied, setCopied] =
     useState<string | null>(null)
 
+  const [page, setPage] = useState(1)
+  const [limit] = useState(20)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [isSearchMode, setIsSearchMode] = useState(false)
+
 
   /* =====================================================
      LOAD
   ===================================================== */
 
   useEffect(() => {
-    load()
+    void load(1)
   }, [])
 
 
-  async function load() {
+  /* =====================================================
+     LOAD
+  ===================================================== */
 
+  async function load(targetPage = 1) {
     try {
-
       setLoading(true)
+      setIsSearchMode(false)
 
-      const res =
-        await AdminService.transactions()
-
-      const list =
-        Array.isArray(res)
-          ? res
-          : res?.items ?? []
-
-      setItems(list)
-
-    } catch {
-
-      toast.error(
-        "Erro ao carregar transações"
+      const res = await AdminService.transactions(
+        targetPage,
+        limit
       )
 
+      const list: Transaction[] = Array.isArray(res)
+        ? res
+        : res?.items ?? []
+
+      setItems(list)
+      setPage(res?.page ?? targetPage)
+      setTotal(res?.total ?? list.length)
+      setTotalPages(
+        Math.max(1, res?.totalPages ?? 1)
+      )
+    } catch (error) {
+      console.error("ADMIN_TRANSACTIONS_LOAD_ERROR:", error)
+      toast.error("Erro ao carregar transações")
     } finally {
-
       setLoading(false)
-
     }
-
   }
-
 
   /* =====================================================
      SEARCH
   ===================================================== */
 
   async function handleSearch() {
-
-    const query =
-      search.trim()
+    const query = search.trim()
 
     if (!query) {
-
-      await load()
-
+      await load(1)
       return
-
     }
 
     try {
-
       setSearching(true)
+      setIsSearchMode(true)
 
       const result =
-        await AdminService.transactionSearch(
-          query
-        )
+        await AdminService.transactionSearch(query)
 
-      const list =
-        Array.isArray(result)
-          ? result
-          : result?.items ?? []
+      const list: Transaction[] = Array.isArray(result)
+        ? result
+        : result?.items ?? []
 
       setItems(list)
+      setPage(1)
+      setTotal(list.length)
+      setTotalPages(1)
 
       if (!list.length) {
-
-        toast.error(
-          "Nenhuma operação encontrada"
-        )
-
+        toast.error("Nenhuma operação encontrada")
       }
-
-    } catch {
-
-      toast.error(
-        "Erro ao pesquisar operação"
+    } catch (error: any) {
+      console.error(
+        "ADMIN_TRANSACTION_SEARCH_ERROR:",
+        error?.response?.data || error
       )
 
+      toast.error(
+        error?.response?.data?.error ||
+        "Erro ao pesquisar operação"
+      )
     } finally {
-
       setSearching(false)
-
     }
-
   }
-
 
   /* =====================================================
      ENTER
@@ -223,11 +220,8 @@ export default function AdminTransactions() {
   ===================================================== */
 
   async function clearSearch() {
-
     setSearch("")
-
-    await load()
-
+    await load(1)
   }
 
 
@@ -352,7 +346,7 @@ export default function AdminTransactions() {
 
 
         <button
-          onClick={load}
+          onClick={() => load(isSearchMode ? 1 : page)}
           disabled={loading || searching}
           className="flex items-center gap-2 bg-[#161A1F] hover:bg-[#1C2128] text-white px-5 py-3 rounded-2xl border border-white/5 text-xs font-bold uppercase tracking-wider transition-all shadow-xl disabled:opacity-50 cursor-pointer"
         >
@@ -601,6 +595,36 @@ export default function AdminTransactions() {
 
           />
 
+        )}
+
+        {!loading && !searching && !isSearchMode && items.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-5 border-t border-white/5">
+            <div className="text-xs text-gray-400">
+              A apresentar {items.length} de {total.toLocaleString("pt-AO")} transações
+              <span className="mx-2 text-gray-600">•</span>
+              Página {page} de {totalPages}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void load(page - 1)}
+                disabled={page <= 1 || loading}
+                className="px-4 py-2 rounded-xl border border-white/10 bg-[#0B0E11] text-xs font-bold text-gray-300 hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void load(page + 1)}
+                disabled={page >= totalPages || loading}
+                className="px-4 py-2 rounded-xl border border-blue-500/20 bg-blue-500/10 text-xs font-bold text-blue-400 hover:bg-blue-500/20 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Seguinte
+              </button>
+            </div>
+          </div>
         )}
 
       </div>

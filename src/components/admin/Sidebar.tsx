@@ -20,6 +20,7 @@ import {
   Trash2,
   LogOut,
   Gauge,
+  Search,
 } from "lucide-react"
 
 const sectionTitle =
@@ -167,6 +168,10 @@ export default function Sidebar() {
 
           <SidebarLink to="/admin/aki/reports" icon={<FileText size={18} className="text-cyan-400" />}>
              Relatórios 5Linhas
+          </SidebarLink>
+
+          <SidebarLink to="/admin/aki/order-query" icon={<Search size={18} className="text-emerald-400" />}>
+             Consultar Ordens AKI
           </SidebarLink>
 
           <SidebarLink to="/admin/redotpay" icon={<Wallet size={18} className="text-blue-400" />}>

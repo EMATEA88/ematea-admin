@@ -33,6 +33,7 @@ import Calendar from "./pages/admin/Calendar";
 import ExchangeRatesPage from "./pages/admin/ExchangeRatesPage"
 import Clients from "./pages/admin/Clients"
 import SalesSettingsPage from "./pages/SalesSettingsPage";
+import AkiOrderQueryPage from "./pages/admin/AkiOrderQueryPage";
 
 import AdminAccountDeletion from "./pages/admin/AdminAccountDeletion"
 
@@ -114,6 +115,8 @@ export default function App() {
           <Route path="commissions/clients" element={<ClientCommissionsPage />} />
 
           <Route path="commissions/calendar" element={<Calendar />} />
+
+          <Route path="aki/order-query" element={<AkiOrderQueryPage />} />
           
           {/* CONTA 5LINHAS / AKI */}
           <Route path="aki" element={<AkiDashboardPage />} />

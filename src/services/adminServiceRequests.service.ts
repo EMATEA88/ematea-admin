@@ -1,178 +1,267 @@
-import { api } from "./api"
+
+import { api } from "./api";
+
+// ================= UTILIZADORES =================
 
 export interface ServiceRequestUser {
-  id: number
-  phone: string
-  name?: string | null
-  email?: string | null
+  id: number;
+  phone: string;
+  fullName?: string | null;
+  name?: string | null;
+  email?: string | null;
+  role?: string;
+  createdAt?: string;
 }
+
+// ================= PARCEIROS =================
 
 export interface ServiceRequestPartner {
-  id: number
-  name: string
+  id: number;
+  name: string;
+  type?: string;
 }
+
+// ================= PROVIDERS =================
 
 export interface ServiceRequestProvider {
-  id: number
-  name: string
+  id: number;
+  name: string;
+  code?: string | null;
 }
+
+// ================= PLANO =================
 
 export interface ServiceRequestPlan {
-  id: number
-  name: string
-  price: number
-  code?: string | null
+  id: number;
+  name: string;
+  price: number;
+  cost?: number;
+  providerCommission?: number;
+  commissionPercent?: number | null;
+  taxPercent?: number | null;
+  valueVariable?: boolean;
+  valueVariableMin?: number | null;
+  valueVariableMax?: number | null;
 
-  partner?: ServiceRequestPartner | null
-  provider?: ServiceRequestProvider | null
+  partner?: ServiceRequestPartner | null;
+
+  serviceGroup?: {
+    id: number;
+    name: string;
+    provider?: ServiceRequestProvider | null;
+  } | null;
 }
+
+// ================= GRUPO DE SERVIÇO =================
+
+export interface ServiceRequestGroup {
+  id: number;
+  name: string;
+  provider?: ServiceRequestProvider | null;
+}
+
+// ================= TRANSAÇÃO =================
+
+export interface ServiceRequestTransaction {
+  id: number;
+  type: string;
+  amount: number;
+  status?: string | null;
+  externalId?: string | null;
+  reference?: string | null;
+  gatewayProvider?: string | null;
+  gatewayStatus?: string | null;
+  providerOrderSn?: string | null;
+  createdAt: string;
+}
+
+// ================= COBRANÇA =================
+
+export interface ServiceRequestCharge {
+  id: number;
+  provider: string;
+  merchantTransactionId: string;
+  externalChargeId?: string | null;
+  externalReference?: string | null;
+  amount: number;
+  currency: string;
+  status: string;
+  failureReason?: string | null;
+  createdAt: string;
+  paidAt?: string | null;
+}
+
+// ================= SOLICITAÇÃO =================
 
 export interface ServiceRequest {
-  /* ================= IDENTIFICAÇÃO ================= */
+  // Identificação
+  id: number;
+  userId?: number;
+  sellerId?: number | null;
+  sellerRole?: string | null;
 
-  id: number
+  transactionId?: number | null;
+  chargeId?: number | null;
 
-  transactionId?: number | null
+  serviceId?: number | null;
+  serviceGroupId?: number | null;
+  providerId?: number | null;
+  partnerId?: number | null;
+  planId?: number | null;
 
-  serviceId?: number | null
+  // Financeiro
+  amount: number;
+  cost?: number | null;
+  profit?: number | null;
+  providerFinalBalance?: number | null;
 
-  serviceGroupId?: number | null
+  // Estado
+  status: string;
+  completedAt?: string | null;
 
-  providerId?: number | null
+  // Cliente
+  customerReference?: string | null;
+  customerName?: string | null;
+  user: ServiceRequestUser;
 
-  partnerId?: number | null
+  // Serviço
+  serviceName?: string | null;
+  serviceGroupName?: string | null;
+  planName?: string | null;
+  providerName?: string | null;
+  partnerName?: string | null;
 
-  planId?: number | null
+  // Relações
+  plan?: ServiceRequestPlan | null;
+  partner?: ServiceRequestPartner | null;
+  serviceGroup?: ServiceRequestGroup | null;
+  transaction?: ServiceRequestTransaction | null;
+  charge?: ServiceRequestCharge | null;
 
-  /* ================= FINANCEIRO ================= */
+  // Referências externas
+  externalProviderRef?: string | null;
+  externalTransactionId?: string | null;
 
-  amount: number
+  // Monitorização do provider
+  monitorAttempts?: number;
+  lastMonitorCheck?: string | null;
+  lastProviderStatus?: string | null;
+  lastProviderCode?: number | null;
+  lastProviderMessage?: string | null;
 
-  cost?: number | null
+  providerResponse?: unknown;
+  providerConfirmedAt?: string | null;
+  providerReconciledAt?: string | null;
+  providerOperationStatus?: string | null;
+  providerOperationCode?: number | null;
 
-  profit?: number | null
-
-  /* ================= STATUS ================= */
-
-  status: string
-
-  /* ================= CLIENTE ================= */
-
-  customerReference?: string | null
-
-  customerName?: string | null
-
-  user: ServiceRequestUser
-
-  /* ================= SERVIÇO ================= */
-
-  serviceName?: string | null
-
-  serviceGroupName?: string | null
-
-  planName?: string | null
-
-  providerName?: string | null
-
-  partnerName?: string | null
-
-  /* ================= PLANO ================= */
-
-  plan?: ServiceRequestPlan | null
-
-  /* ================= REFERÊNCIAS EXTERNAS ================= */
-
-  externalProviderRef?: string | null
-
-  externalTransactionId?: string | null
-
-  /* ================= PROVIDER ================= */
-
-  providerResponse?: Record<string, unknown> | string | null
-
-  providerFinalBalance?: number | null
-
-  providerConfirmedAt?: string | null
-
-  providerReconciledAt?: string | null
-
-  providerOperationStatus?: string | null
-
-  providerOperationCode?: number | null
-
-  /* ================= DATAS ================= */
-
-  completedAt?: string | null
-
-  createdAt: string
-
-  updatedAt?: string
+  // Datas
+  createdAt: string;
+  updatedAt?: string;
 }
+
+// ================= PAGINAÇÃO =================
+
+export interface ServiceRequestsPagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// ================= ESTATÍSTICAS =================
+
+export interface ServiceRequestsStats {
+  total: number;
+  pending: number;
+  inProgress: number;
+  completed: number;
+  rejected: number;
+  providerTimeout: number;
+}
+
+// ================= RESPOSTA DA LISTAGEM =================
 
 export interface AdminServiceRequestsResponse {
-  items?: ServiceRequest[]
+  items: ServiceRequest[];
 
-  data?: ServiceRequest[]
+  pagination: ServiceRequestsPagination;
 
-  total?: number
-  page?: number
-  limit?: number
-  totalPages?: number
+  stats: ServiceRequestsStats;
 }
 
-export const adminServiceRequestsService = {
+// ================= RESPOSTA DOS DETALHES =================
 
-  /* =====================================================
-     LISTAR SOLICITAÇÕES
-     ===================================================== */
+interface ServiceRequestDetailsResponse {
+  success: boolean;
+  data: ServiceRequest;
+}
+
+// ================= SERVIÇO ADMIN =================
+
+export const adminServiceRequestsService = {
+  // ================= LISTAR SOLICITAÇÕES =================
 
   getRequests: async (
     page = 1,
     limit = 20,
-    status?: string
-  ): Promise<
-    ServiceRequest[] | AdminServiceRequestsResponse
-  > => {
-
+    status?: string,
+    search?: string
+  ): Promise<AdminServiceRequestsResponse> => {
     const params: Record<string, string | number> = {
       page,
-      limit
-    }
+      limit,
+    };
 
     if (status) {
-      params.status = status
+      params.status = status;
     }
 
-    const { data } =
-      await api.get<
-        ServiceRequest[] |
-        AdminServiceRequestsResponse
-      >(
-        "/admin/service-requests",
-        { params }
-      )
+    if (search?.trim()) {
+      params.search = search.trim();
+    }
 
-    return data
+    const { data } = await api.get<AdminServiceRequestsResponse>(
+      "/admin/service-requests",
+      { params }
+    );
+
+    return data;
   },
 
-  /* =====================================================
-     CONCLUIR SERVIÇO
-     ===================================================== */
+  // ================= CONSULTAR DETALHES =================
 
-  completeService: async (
-    id: number
-  ) => {
-
+  getRequestById: async (id: number): Promise<ServiceRequest> => {
     if (!Number.isInteger(id) || id <= 0) {
-      throw new Error("INVALID_SERVICE_REQUEST_ID")
+      throw new Error("INVALID_SERVICE_REQUEST_ID");
     }
 
     const { data } =
-      await api.patch(
-        `/admin/service-requests/${id}/complete`
-      )
+      await api.get<ServiceRequestDetailsResponse>(
+        `/admin/service-requests/${id}`
+      );
 
-    return data
-  }
+    if (!data.success || !data.data) {
+      throw new Error("SERVICE_REQUEST_NOT_FOUND");
+    }
 
-}
+    return data.data;
+  },
+
+  // ================= CONCLUIR SERVIÇO =================
+
+  completeService: async (id: number): Promise<ServiceRequest> => {
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new Error("INVALID_SERVICE_REQUEST_ID");
+    }
+
+    const { data } = await api.patch<{ 
+      success: boolean;
+      data: ServiceRequest;
+    }>(
+      `/admin/service-requests/${id}/complete`
+    );
+
+    return data.data;
+  },
+};
