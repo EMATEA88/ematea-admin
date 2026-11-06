@@ -1,5 +1,5 @@
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminAkiService } from "../../services/adminAki.service";
 
 type Purchase = Record<string, any>;
@@ -24,7 +24,6 @@ function formatDate(value: any): string {
   if (!value) return "N/D";
 
   const date = new Date(value);
-
   return Number.isNaN(date.getTime())
     ? String(value)
     : date.toLocaleString("pt-PT");
@@ -93,16 +92,8 @@ export default function AkiReportsPage() {
   const [hasMore, setHasMore] = useState(false);
   const [loadedPages, setLoadedPages] = useState<number[]>([]);
 
-  // Impede chamadas simultâneas, mesmo antes da atualização do estado loading.
-  const requestInProgress = useRef(false);
-
   const loadReports = useCallback(
     async (requestedPage = 1) => {
-      if (requestInProgress.current || requestedPage < 1) {
-        return;
-      }
-
-      requestInProgress.current = true;
       setLoading(true);
       setError("");
       setMessage("");
@@ -121,8 +112,7 @@ export default function AkiReportsPage() {
 
         if (response?.success === false) {
           throw new Error(
-            response?.message ||
-              "A 5Linhas não conseguiu devolver o relatório."
+            response?.message || "A 5Linhas não conseguiu devolver o relatório."
           );
         }
 
@@ -131,7 +121,6 @@ export default function AkiReportsPage() {
         setReports(items);
         setPage(requestedPage);
         setHasMore(items.length >= PAGE_SIZE);
-
         setLoadedPages((previous) =>
           previous.includes(requestedPage)
             ? previous
@@ -143,26 +132,26 @@ export default function AkiReportsPage() {
             "Nenhuma transação encontrada para os critérios selecionados."
           );
         } else {
-          setMessage(
-            `${items.length} registos recebidos da API 5Linhas.`
-          );
+          setMessage(`${items.length} registos recebidos da API 5Linhas.`);
         }
       } catch (err: any) {
         setReports([]);
         setHasMore(false);
-
         setError(
           err?.response?.data?.message ||
             err?.message ||
             "Não foi possível carregar o relatório."
         );
       } finally {
-        requestInProgress.current = false;
         setLoading(false);
       }
     },
     [dateStart, dateEnd]
   );
+
+  useEffect(() => {
+    void loadReports(1);
+  }, [loadReports]);
 
   const filteredReports = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -204,7 +193,6 @@ export default function AkiReportsPage() {
 
   const successfulCount = reports.filter((item) => {
     const status = getStatus(item).toUpperCase();
-
     return (
       status.includes("SUCCESS") ||
       status.includes("SUCESS") ||
@@ -214,7 +202,6 @@ export default function AkiReportsPage() {
 
   const failedCount = reports.filter((item) => {
     const status = getStatus(item).toUpperCase();
-
     return (
       status.includes("FAIL") ||
       status.includes("REJECT") ||
@@ -228,26 +215,13 @@ export default function AkiReportsPage() {
   );
 
   function applyFilters() {
-    if (requestInProgress.current) return;
-
     setLoadedPages([]);
     void loadReports(1);
   }
 
   function changePage(nextPage: number) {
-    if (nextPage < 1 || requestInProgress.current) return;
-
+    if (nextPage < 1 || loading) return;
     void loadReports(nextPage);
-  }
-
-  function clearFilters() {
-    if (requestInProgress.current) return;
-
-    setDateStart("");
-    setDateEnd("");
-    setSearch("");
-    setStatusFilter("ALL");
-    setLoadedPages([]);
   }
 
   return (
@@ -257,11 +231,9 @@ export default function AkiReportsPage() {
           <p className="text-xs uppercase tracking-widest text-cyan-400 mb-2">
             Integração oficial
           </p>
-
           <h1 className="text-2xl font-bold text-white">
             Relatórios 5Linhas
           </h1>
-
           <p className="text-sm text-gray-400 mt-1">
             Compras e transações devolvidas pela API da 5Linhas.
           </p>
@@ -278,23 +250,17 @@ export default function AkiReportsPage() {
       </header>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <SummaryCard
-          title="Registos nesta página"
-          value={reports.length}
-        />
-
+        <SummaryCard title="Registos nesta página" value={reports.length} />
         <SummaryCard
           title="Sucessos nesta página"
           value={successfulCount}
           color="text-emerald-400"
         />
-
         <SummaryCard
           title="Falhas nesta página"
           value={failedCount}
           color="text-red-400"
         />
-
         <SummaryCard
           title="Valor nesta página"
           value={`${totalAmount.toLocaleString("pt-PT", {
@@ -305,16 +271,13 @@ export default function AkiReportsPage() {
       </section>
 
       <section className="rounded-xl border border-[#1E2329] bg-[#12161C] p-4 md:p-5 space-y-4">
-        <h2 className="font-semibold text-white">
-          Filtros de pesquisa
-        </h2>
+        <h2 className="font-semibold text-white">Filtros de pesquisa</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs text-gray-400 mb-2">
               Data inicial
             </label>
-
             <input
               type="date"
               value={dateStart}
@@ -323,12 +286,11 @@ export default function AkiReportsPage() {
               className="w-full rounded-lg border border-gray-700 bg-[#0B0E11] px-3 py-2.5 text-sm text-white"
             />
           </div>
-
+ 
           <div>
             <label className="block text-xs text-gray-400 mb-2">
               Data final
             </label>
-
             <input
               type="date"
               value={dateEnd}
@@ -342,7 +304,6 @@ export default function AkiReportsPage() {
             <label className="block text-xs text-gray-400 mb-2">
               Estado da transação
             </label>
-
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
@@ -359,7 +320,6 @@ export default function AkiReportsPage() {
             <label className="block text-xs text-gray-400 mb-2">
               Pesquisar transação
             </label>
-
             <input
               type="search"
               value={search}
@@ -382,9 +342,14 @@ export default function AkiReportsPage() {
 
           <button
             type="button"
-            onClick={clearFilters}
-            disabled={loading}
-            className="rounded-lg border border-gray-700 hover:bg-white/5 disabled:opacity-50 px-5 py-2.5 text-sm text-gray-300"
+            onClick={() => {
+              setDateStart("");
+              setDateEnd("");
+              setSearch("");
+              setStatusFilter("ALL");
+              setLoadedPages([]);
+            }}
+            className="rounded-lg border border-gray-700 hover:bg-white/5 px-5 py-2.5 text-sm text-gray-300"
           >
             Limpar pesquisa
           </button>
@@ -404,10 +369,7 @@ export default function AkiReportsPage() {
       <section className="overflow-hidden rounded-xl border border-[#1E2329] bg-[#12161C]">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-800 p-4">
           <div>
-            <h2 className="font-semibold text-white">
-              Transações oficiais
-            </h2>
-
+            <h2 className="font-semibold text-white">Transações oficiais</h2>
             <p className="text-xs text-gray-500 mt-1">
               Página {page} · {filteredReports.length} registos apresentados
             </p>
@@ -435,19 +397,13 @@ export default function AkiReportsPage() {
             <tbody className="divide-y divide-gray-800/70 text-xs">
               {loading ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="p-10 text-center text-gray-400"
-                  >
+                  <td colSpan={6} className="p-10 text-center text-gray-400">
                     A consultar os registos da 5Linhas...
                   </td>
                 </tr>
               ) : filteredReports.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="p-10 text-center text-gray-500"
-                  >
+                  <td colSpan={6} className="p-10 text-center text-gray-500">
                     Nenhuma transação corresponde à pesquisa.
                   </td>
                 </tr>
@@ -463,22 +419,18 @@ export default function AkiReportsPage() {
                       <td className="px-4 py-4 font-mono text-gray-300">
                         {item.Order_ID ?? "N/D"}
                       </td>
-
                       <td className="px-4 py-4 text-gray-200">
                         {item.Transaction_ProductDescription ?? "N/D"}
                       </td>
-
                       <td className="px-4 py-4 font-mono text-gray-400">
                         {item.Transaction_Destination ?? "N/D"}
                       </td>
-
                       <td className="px-4 py-4 font-mono font-semibold text-emerald-400">
                         {formatAmount(
                           item.Transaction_Value,
                           item.Purchase_Currency_Code
                         )}
                       </td>
-
                       <td className="px-4 py-4">
                         <span
                           className={`inline-flex rounded-md border px-2 py-1 text-[10px] font-bold ${statusClass(status)}`}
@@ -486,7 +438,6 @@ export default function AkiReportsPage() {
                           {status}
                         </span>
                       </td>
-
                       <td className="px-4 py-4 whitespace-nowrap text-gray-400">
                         {formatDate(item.Purchase_Date)}
                       </td>
@@ -508,9 +459,7 @@ export default function AkiReportsPage() {
             ← Anterior
           </button>
 
-          <span className="text-xs text-gray-500">
-            Página {page}
-          </span>
+          <span className="text-xs text-gray-500">Página {page}</span>
 
           <button
             type="button"
@@ -543,13 +492,8 @@ function SummaryCard({
 }) {
   return (
     <div className="rounded-xl border border-[#1E2329] bg-[#12161C] p-5">
-      <p className="text-xs uppercase tracking-wider text-gray-500">
-        {title}
-      </p>
-
-      <p className={`mt-2 break-words text-xl font-bold ${color}`}>
-        {value}
-      </p>
+      <p className="text-xs uppercase tracking-wider text-gray-500">{title}</p>
+      <p className={`mt-2 break-words text-xl font-bold ${color}`}>{value}</p>
     </div>
   );
 }
