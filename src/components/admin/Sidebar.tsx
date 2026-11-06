@@ -1,33 +1,26 @@
+
 import { NavLink, useNavigate } from "react-router-dom"
 import {
   LayoutDashboard,
   Users,
-  CreditCard,
-  ArrowDownUp,
   Repeat,
-  Gift,
   Bell,
   FileText,
-  Building2,
-  ShieldCheck,
-  UserCheck,
-  Percent,
   Server,
   Wallet,
-  DollarSign,
-  BarChart3,
   CalendarDays,
-  Trash2,
   LogOut,
-  Gauge,
-  Search,
+  ClipboardList,
+  Landmark,
+  Handshake,
+  Settings2,
 } from "lucide-react"
 
 const sectionTitle =
-  "px-6 pt-6 pb-2 text-[10px] uppercase text-gray-500 font-extrabold tracking-widest"
+  "px-4 pt-7 pb-3 text-[10px] uppercase text-gray-400 font-extrabold tracking-[0.16em]"
 
 const linkBase =
-  "flex items-center gap-3 px-6 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative"
+  "flex items-center gap-3 px-4 py-3 text-[13px] font-medium rounded-xl transition-all duration-200 group relative"
 
 export default function Sidebar() {
   const navigate = useNavigate()
@@ -40,55 +33,109 @@ export default function Sidebar() {
   return (
     <aside className="w-64 h-screen bg-[#0B0E11] border-r border-[#1E2329] flex flex-col flex-shrink-0 select-none">
 
-      {/* LOGO */}
-      <div className="h-20 flex items-center justify-between px-6 border-b border-[#1E2329] flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-lg shadow-emerald-500/5">
-            <span className="text-emerald-400 font-black text-sm tracking-wider">
-              E
-            </span>
-          </div>
+      {/* IDENTIDADE EMATEA */}
+<div className="h-20 flex items-center px-5 border-b border-[#1E2329] flex-shrink-0">
+  <div className="flex items-center gap-3">
 
-          <div className="flex flex-col">
-            <span className="font-black text-white tracking-widest text-sm">
-              EMATEA
-            </span>
-            <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest">
-              Admin Control
-            </span>
-          </div>
-        </div>
-      </div>
+    {/* LOGOTIPO CIRCULAR */}
+    <div className="w-11 h-11 min-w-11 rounded-full overflow-hidden border-2 border-emerald-500/30 bg-[#101820] shadow-lg shadow-emerald-500/10">
+      <img
+        src="/logo-ematea.png"
+        alt="Logotipo EMATEA"
+        className="block w-full h-full object-cover scale-[1.15]"
+      />
+    </div>
+
+    <div className="flex flex-col">
+      <span className="font-black text-white tracking-[0.15em] text-sm">
+        EMATEA
+      </span>
+
+      <span className="text-[9px] text-gray-500 uppercase font-bold tracking-[0.16em]">
+        Admin Control
+      </span>
+    </div>
+
+  </div>
+</div>
 
       {/* NAVEGAÇÃO */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        <nav className="h-full overflow-y-auto py-4 px-3 space-y-1 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-track]:bg-[#0B0E11] [&::-webkit-scrollbar-thumb]:bg-[#2B3139] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#3A4149]">
+        <nav className="h-full overflow-y-auto py-2 px-3 space-y-1
+          [&::-webkit-scrollbar]:w-1.5
+          [&::-webkit-scrollbar-track]:bg-[#0B0E11]
+          [&::-webkit-scrollbar-thumb]:bg-[#2B3139]
+          [&::-webkit-scrollbar-thumb]:rounded-full
+          hover:[&::-webkit-scrollbar-thumb]:bg-[#3A4149]">
 
-          <div className={sectionTitle}>Core</div>
+          {/* PAINEL */}
+          <div className={sectionTitle}>Painel</div>
 
           <SidebarLink to="/admin" icon={<LayoutDashboard size={18} />}>
             Dashboard
           </SidebarLink>
 
+          {/* GESTÃO */}
+          <div className={sectionTitle}>Gestão</div>
+
           <SidebarLink to="/admin/users" icon={<Users size={18} />}>
             Utilizadores
           </SidebarLink>
 
-          <SidebarLink to="/admin/clients" icon={<Users size={18} />}>
-            Clientes
+          <SidebarLink
+            to="/admin/finances"
+            icon={<Landmark size={18} />}
+          >
+            Finanças
           </SidebarLink>
 
-          <SidebarLink to="/admin/agents" icon={<UserCheck size={18} />}>
-            Agentes
+          <SidebarLink to="/admin/commissions" icon={<Repeat size={18} />}>
+            Comissões Gerais
           </SidebarLink>
 
-          <SidebarLink to="/admin/subagents" icon={<Users size={18} />}>
-            Sub-Agentes
+          <SidebarLink
+            to="/admin/commissions/calendar"
+            icon={<CalendarDays size={18} />}
+          >
+            Calendário Geral
           </SidebarLink>
 
-          <SidebarLink to="/admin/sales-settings" icon={<Gauge size={18} className="text-emerald-400" />}>
-            Limite de Vendas
+          {/* CONFIGURAÇÕES */}
+          <div className={sectionTitle}>Configurações</div>
+
+          <SidebarLink
+            to="/admin/settings"
+            icon={<Settings2 size={18} />}
+          >
+            Definições
           </SidebarLink>
+
+          {/* INTEGRAÇÕES */}
+          <div className={sectionTitle}>Integrações</div>
+
+          <SidebarLink
+            to="/admin/partners"
+            icon={<Handshake size={18} />}
+          >
+            Parceiros
+          </SidebarLink>
+
+          <SidebarLink
+            to="/admin/5linhas"
+            icon={<Server size={18} />}
+          >
+            5 Linhas
+          </SidebarLink>
+
+          <SidebarLink
+            to="/admin/redotpay"
+            icon={<Wallet size={18} />}
+          >
+            RedotPay
+          </SidebarLink>
+
+          {/* SISTEMA */}
+          <div className={sectionTitle}>Sistema</div>
 
           <SidebarLink to="/admin/logs" icon={<FileText size={18} />}>
             Logs
@@ -98,101 +145,14 @@ export default function Sidebar() {
             Notificações
           </SidebarLink>
 
-          <div className={sectionTitle}>Financeiro</div>
-
-          <SidebarLink to="/admin/wallet" icon={<Wallet size={18} className="text-emerald-400" />}>
-            Wallet Ematea
+          <SidebarLink
+            to="/admin/operations"
+            icon={<ClipboardList size={18} />}
+          >
+            Operações Administrativas
           </SidebarLink>
 
-          <SidebarLink to="/admin/reports/sales-commissions" icon={<BarChart3 size={18} className="text-blue-400" />}>
-            Vendas & Comissões
-          </SidebarLink>
-
-          <SidebarLink to="/admin/exchange-rates" icon={<DollarSign size={18} className="text-yellow-400" />}>
-            Taxas de Câmbio
-          </SidebarLink>
-
-          <SidebarLink to="/admin/banks" icon={<Building2 size={18} />}>
-            Bancos
-          </SidebarLink>
-
-          <SidebarLink to="/admin/recharges" icon={<CreditCard size={18} />}>
-            Depósitos
-          </SidebarLink>
-
-          <SidebarLink to="/admin/withdrawals" icon={<ArrowDownUp size={18} />}>
-            Levantamentos
-          </SidebarLink>
-
-          <SidebarLink to="/admin/transactions" icon={<Repeat size={18} />}>
-            Transações
-          </SidebarLink>
-
-          <SidebarLink to="/admin/commissions" icon={<Repeat size={18} />}>
-            Comissões Gerais
-          </SidebarLink>
-
-          <SidebarLink to="/admin/commissions/agents" icon={<Percent size={18} />}>
-            Comissões Agentes
-          </SidebarLink>
-
-          <SidebarLink to="/admin/commissions/sub-agents" icon={<Percent size={18} />}>
-            Comissões Sub-Agentes
-          </SidebarLink>
-
-          <SidebarLink to="/admin/commissions/calendar" icon={<CalendarDays size={18} className="text-cyan-400" />}>
-            Calendário Geral
-          </SidebarLink>
-
-          <SidebarLink to="/admin/commissions/clients" icon={<Percent size={18} />}>
-            Comissões Clientes
-          </SidebarLink>
-
-          <SidebarLink to="/admin/sub-agents/salaries" icon={<DollarSign size={18} className="text-cyan-400" />}>
-            Salários & Bónus
-          </SidebarLink>
-
-          <div className={sectionTitle}>Serviços</div>
-
-          <SidebarLink to="/admin/services">
-            Solicitações
-          </SidebarLink>
-
-          <SidebarLink to="/admin/partners">
-            Parceiros
-          </SidebarLink>
-
-          <SidebarLink to="/admin/aki" icon={<Server size={18} />}>
-            Conta 5Linhas
-          </SidebarLink>
-
-          <SidebarLink to="/admin/aki/reports" icon={<FileText size={18} className="text-cyan-400" />}>
-             Relatórios 5Linhas
-          </SidebarLink>
-
-          <SidebarLink to="/admin/aki/order-query" icon={<Search size={18} className="text-emerald-400" />}>
-             Consultar Ordens AKI
-          </SidebarLink>
-
-          <SidebarLink to="/admin/redotpay" icon={<Wallet size={18} className="text-blue-400" />}>
-            RedotPay
-          </SidebarLink>
-
-          <div className={sectionTitle}>Compliance</div>
-
-          <SidebarLink to="/admin/kyc" icon={<ShieldCheck size={18} />}>
-            KYC
-          </SidebarLink>
-
-          <SidebarLink to="/admin/gift" icon={<Gift size={18} />}>
-            Gift
-          </SidebarLink>
-
-          <SidebarLink to="/admin/account-deletion" icon={<Trash2 size={18} />}>
-            Eliminar Utilizador
-          </SidebarLink>
-
-          <div className="h-4" />
+          <div className="h-5" />
         </nav>
       </div>
 
@@ -227,8 +187,8 @@ function SidebarLink({
       className={({ isActive }) =>
         `${linkBase} ${
           isActive
-            ? "bg-[#161A1F] text-white font-bold border border-white/5 shadow-inner"
-            : "text-gray-400 hover:text-white hover:bg-[#12161B]"
+            ? "bg-emerald-500/10 text-white font-bold border border-emerald-500/20 shadow-inner"
+            : "text-gray-400 hover:text-white hover:bg-[#151A20]"
         }`
       }
     >
@@ -241,8 +201,8 @@ function SidebarLink({
           <span
             className={`${
               isActive
-                ? "text-white"
-                : "text-gray-400 group-hover:text-gray-200"
+                ? "text-emerald-400"
+                : "text-gray-500 group-hover:text-gray-200"
             } transition-colors`}
           >
             {icon}

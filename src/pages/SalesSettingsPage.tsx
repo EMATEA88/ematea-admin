@@ -1,18 +1,4 @@
-
 import { useEffect, useState } from "react";
-import {
-  Gauge,
-  ShieldCheck,
-  Clock3,
-  RefreshCw,
-  Save,
-  CheckCircle2,
-  AlertCircle,
-  Coins,
-  Users,
-  Info,
-} from "lucide-react";
-
 import salesSettingsService from "../services/salesSettings.service";
 
 export default function SalesSettingsPage() {
@@ -35,7 +21,9 @@ export default function SalesSettingsPage() {
       setLimit(value);
       setSavedLimit(value);
     } catch {
-      setError("Não foi possível carregar as configurações. Verifica a ligação ao servidor.");
+      setError(
+        "Não foi possível carregar as configurações. Verifique a ligação ao servidor."
+      );
     } finally {
       setLoading(false);
     }
@@ -52,7 +40,7 @@ export default function SalesSettingsPage() {
     setError("");
 
     if (!Number.isFinite(value) || value <= 0) {
-      setError("Introduz um limite válido superior a zero.");
+      setError("Introduza um limite válido superior a zero.");
       return;
     }
 
@@ -64,14 +52,12 @@ export default function SalesSettingsPage() {
     setSaving(true);
 
     try {
-      const result =
-        await salesSettingsService.updateDailySalesLimit(value);
-
+      const result = await salesSettingsService.updateDailySalesLimit(value);
       const updated = String(result.dailySalesLimit);
 
       setLimit(updated);
       setSavedLimit(updated);
-      setMessage("O limite diário foi atualizado com sucesso.");
+      setMessage("O limite diário global foi atualizado com sucesso.");
     } catch (err: any) {
       setError(
         err?.response?.data?.message ??
@@ -85,128 +71,93 @@ export default function SalesSettingsPage() {
 
   const hasChanges = limit !== savedLimit;
 
-  return (
-    <div className="min-h-full space-y-6 p-4 text-gray-200 sm:p-6 lg:p-8">
-      {/* CABEÇALHO */}
-      <div className="flex flex-col justify-between gap-4 border-b border-[#1E2329] pb-6 sm:flex-row sm:items-center">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10">
-            <Gauge size={25} className="text-emerald-400" />
-          </div>
+  const formattedLimit = Number(savedLimit).toLocaleString("pt-PT", {
+    maximumFractionDigits: 2,
+  });
 
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+  return (
+    <div className="min-h-full bg-[#0a0a0a] px-6 py-10 text-neutral-100 selection:bg-neutral-700 selection:text-neutral-100">
+      <div className="mx-auto w-full max-w-4xl space-y-8">
+        
+        {/* Cabeçalho */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-800 pb-6">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-900 text-neutral-300 border border-neutral-800">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </span>
+              <h1 className="text-xl font-semibold tracking-tight text-neutral-100">
                 Limite de Vendas
               </h1>
-
-              <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                Configuração global
-              </span>
             </div>
+            <p className="text-sm text-neutral-400 pl-12">
+              Gestão de parâmetros de risco e tecto operacional para os subagentes EMATEA.
+            </p>
+          </div>
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
-              Gere o valor máximo de vendas permitido diariamente aos
-              subagentes criados pela EMATEA.
+          <button
+            type="button"
+            onClick={() => void loadSettings()}
+            disabled={loading || saving}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-medium text-neutral-300 shadow-sm transition-all hover:bg-neutral-800 hover:text-white focus:outline-none focus:ring-1 focus:ring-neutral-600 disabled:opacity-40"
+          >
+            <svg className={`h-4 w-4 ${loading ? "animate-spin text-neutral-400" : "text-neutral-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Sincronizar
+          </button>
+        </div>
+
+        {/* Card Principal de Visualização */}
+        <div className="relative overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/40 p-6 shadow-xl backdrop-blur-md">
+          <div className="space-y-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+              Tecto Máximo Ativo (Global)
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-bold tracking-tight tabular-nums text-neutral-100">
+                {loading ? (
+                  <span className="inline-block h-8 w-36 animate-pulse rounded bg-neutral-800 align-middle" />
+                ) : (
+                  formattedLimit
+                )}
+              </span>
+              <span className="text-lg font-medium text-neutral-400">Kz</span>
+            </div>
+            <p className="text-xs text-neutral-500 pt-1">
+              Atualizado em tempo real com base nos registros do servidor central.
             </p>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => void loadSettings()}
-          disabled={loading || saving}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[#2B3139] bg-[#12161B] px-4 py-2.5 text-sm font-medium text-gray-300 transition hover:border-[#414955] hover:bg-[#191E24] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <RefreshCw
-            size={15}
-            className={loading ? "animate-spin" : ""}
-          />
-          Atualizar dados
-        </button>
-      </div>
-
-      {/* INDICADORES */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-[#252B33] bg-[#11151A] p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-400">
-              Limite diário atual
-            </span>
-
-            <div className="rounded-xl bg-blue-500/10 p-2.5">
-              <Coins size={20} className="text-blue-400" />
-            </div>
+        {/* Card de Configuração / Edição */}
+        <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-6 shadow-xl backdrop-blur-md space-y-6">
+          <div className="border-b border-neutral-800 pb-4">
+            <h2 className="text-base font-medium text-neutral-200">Alterar Limite Diário</h2>
+            <p className="text-xs text-neutral-400 mt-0.5">Defina o novo valor aplicável para transações diárias.</p>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tight text-white">
-              {loading
-                ? "—"
-                : Number(savedLimit).toLocaleString("pt-PT", {
-                    maximumFractionDigits: 2,
-                  })}
-            </span>
-
-            <span className="text-sm font-semibold text-gray-500">Kz</span>
-          </div>
-
-          <p className="mt-2 text-xs text-gray-500">
-            Valor global guardado na base de dados.
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-[#252B33] bg-[#11151A] p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-400">
-              Âmbito da configuração
-            </span>
-
-            <div className="rounded-xl bg-emerald-500/10 p-2.5">
-              <Users size={20} className="text-emerald-400" />
-            </div>
-          </div>
-
-          <p className="mt-4 text-xl font-bold text-white">
-            Subagentes EMATEA
-          </p>
-
-          <p className="mt-2 text-xs leading-5 text-gray-500">
-            Aplica-se globalmente, sem alterar os limites dos subagentes
-            independentes dos agentes.
-          </p>
-        </div>
-      </div>
-
-      {/* FORMULÁRIO */}
-      <div className="overflow-hidden rounded-2xl border border-[#252B33] bg-[#11151A]">
-        <div className="border-b border-[#252B33] px-5 py-4 sm:px-6">
-          <h2 className="font-semibold text-white">
-            Configurar limite diário
-          </h2>
-
-          <p className="mt-1 text-xs leading-5 text-gray-500">
-            Define o novo valor máximo permitido por subagente em cada dia.
-          </p>
-        </div>
-
-        <div className="space-y-5 p-5 sm:p-6">
           {loading ? (
-            <div className="flex items-center gap-3 py-6 text-sm text-gray-400">
-              <RefreshCw size={18} className="animate-spin text-emerald-400" />
-              A carregar configurações...
+            <div className="py-8 flex items-center justify-center gap-3 text-neutral-400 text-sm">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-500 border-t-transparent" />
+              A carregar parâmetros de configuração...
             </div>
           ) : (
-            <>
-              <div className="max-w-xl">
+            <div className="space-y-5">
+              <div className="max-w-xl space-y-2">
                 <label
                   htmlFor="dailySalesLimit"
-                  className="mb-2 block text-sm font-medium text-gray-300"
+                  className="block text-xs font-semibold uppercase tracking-wider text-neutral-400"
                 >
-                  Novo limite diário
+                  Novo Limite Autorizado (Kz)
                 </label>
 
-                <div className="relative">
+                <div className="relative rounded-lg shadow-sm">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <span className="text-sm font-semibold text-neutral-500">Kz</span>
+                  </div>
                   <input
                     id="dailySalesLimit"
                     type="number"
@@ -220,111 +171,49 @@ export default function SalesSettingsPage() {
                       setError("");
                     }}
                     disabled={saving}
-                    placeholder="Ex.: 200000"
-                    className="w-full rounded-xl border border-[#343B45] bg-[#0B0E11] px-4 py-3 pr-16 text-base font-semibold text-white outline-none transition placeholder:font-normal placeholder:text-gray-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 disabled:opacity-60"
+                    className="h-11 w-full rounded-lg border border-neutral-800 bg-neutral-950 pl-12 pr-4 text-sm font-medium text-neutral-100 placeholder-neutral-600 shadow-inner outline-none transition-all focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 disabled:opacity-50"
+                    placeholder="0.00"
                   />
-
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">
-                    Kz
-                  </span>
                 </div>
-
-                <p className="mt-2 text-xs text-gray-500">
-                  O novo valor será aplicado globalmente após guardar.
-                </p>
               </div>
 
+              {/* Mensagens de Feedback Estilizadas (Neutras/Minimalistas) */}
               {message && (
-                <div
-                  role="status"
-                  className="flex items-start gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.07] p-4 text-sm text-emerald-400"
-                >
-                  <CheckCircle2 size={19} className="mt-0.5 shrink-0" />
+                <div role="status" className="flex items-center gap-3 rounded-lg border border-neutral-700 bg-neutral-900 p-4 text-sm text-neutral-200">
+                  <svg className="h-5 w-5 flex-shrink-0 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
                   <span>{message}</span>
                 </div>
               )}
 
               {error && (
-                <div
-                  role="alert"
-                  className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/[0.07] p-4 text-sm text-red-400"
-                >
-                  <AlertCircle size={19} className="mt-0.5 shrink-0" />
+                <div role="alert" className="flex items-center gap-3 rounded-lg border border-neutral-700 bg-neutral-900 p-4 text-sm text-neutral-300">
+                  <svg className="h-5 w-5 flex-shrink-0 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
                   <span>{error}</span>
                 </div>
               )}
 
-              <div className="flex flex-col gap-3 border-t border-[#252B33] pt-5 sm:flex-row sm:items-center sm:justify-between">
-                <p className="flex items-start gap-2 text-xs leading-5 text-gray-500">
-                  <Info size={15} className="mt-0.5 shrink-0 text-blue-400" />
-                  O limite é contabilizado diariamente e reinicia às 00h00,
-                  no horário de Angola.
-                </p>
-
+              {/* Botão de Ação */}
+              <div className="pt-2 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => void handleSave()}
                   disabled={saving || !hasChanges}
-                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-[#07110C] shadow-lg shadow-emerald-500/10 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-neutral-200 px-5 py-2.5 text-sm font-semibold text-neutral-900 shadow transition-all hover:bg-white focus:outline-none focus:ring-2 focus:ring-neutral-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35"
                 >
-                  {saving ? (
-                    <RefreshCw size={17} className="animate-spin" />
-                  ) : (
-                    <Save size={17} />
+                  {saving && (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent" />
                   )}
-
-                  {saving ? "A guardar..." : "Guardar alterações"}
+                  {saving ? "A processar..." : "Guardar alterações"}
                 </button>
               </div>
-            </>
+            </div>
           )}
         </div>
-      </div>
 
-      {/* REGRAS OPERACIONAIS */}
-      <div className="rounded-2xl border border-[#252B33] bg-[#11151A] p-5 sm:p-6">
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-amber-500/10 p-2.5">
-            <ShieldCheck size={20} className="text-amber-400" />
-          </div>
-
-          <div>
-            <h2 className="font-semibold text-white">
-              Regras operacionais
-            </h2>
-            <p className="mt-1 text-xs text-gray-500">
-              Condições aplicadas pelo backend.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="flex items-start gap-3 rounded-xl border border-[#252B33] bg-[#0B0E11] p-4">
-            <Clock3 size={18} className="mt-0.5 shrink-0 text-emerald-400" />
-            <div>
-              <p className="text-sm font-semibold text-gray-200">
-                Reinício diário
-              </p>
-              <p className="mt-1 text-xs leading-5 text-gray-500">
-                O total diário é calculado de acordo com o dia atual em
-                Angola.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 rounded-xl border border-[#252B33] bg-[#0B0E11] p-4">
-            <ShieldCheck size={18} className="mt-0.5 shrink-0 text-emerald-400" />
-            <div>
-              <p className="text-sm font-semibold text-gray-200">
-                Controlo centralizado
-              </p>
-              <p className="mt-1 text-xs leading-5 text-gray-500">
-                A validação é feita no servidor, não apenas no painel
-                administrativo.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

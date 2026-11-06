@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/admin/ProtectedRoute"
 import AkiReportsPage from './pages/admin/AkiReportsPage';
 import Dashboard from "./pages/admin/Dashboard"
 import Users from "./pages/admin/Users"
+import UsersGeneral from "./pages/admin/UsersGeneral"
 import Recharges from "./pages/admin/Recharges"
 import Withdrawals from "./pages/admin/Withdrawals"
 import Transactions from "./pages/admin/Transactions"
@@ -34,6 +35,11 @@ import ExchangeRatesPage from "./pages/admin/ExchangeRatesPage"
 import Clients from "./pages/admin/Clients"
 import SalesSettingsPage from "./pages/SalesSettingsPage";
 import AkiOrderQueryPage from "./pages/admin/AkiOrderQueryPage";
+import CommissionsPage from "./pages/admin/commissions/CommissionsPage"
+import OperationsPage from "./pages/admin/OperationsPage"
+import FinancesPage from "./pages/admin/FinancesPage"
+import FiveLinesPage from "./pages/admin/FiveLinesPage"
+import SettingsPage from "./pages/admin/SettingsPage"
 
 import AdminAccountDeletion from "./pages/admin/AdminAccountDeletion"
 
@@ -89,11 +95,13 @@ export default function App() {
 
           {/* CORE */}
           <Route path="users" element={<Users />} />
+          <Route path="usersgeneral" element={<UsersGeneral />} />
           <Route path="clients" element={<Clients />} />
           <Route path="recharges" element={<Recharges />} />
           <Route path="withdrawals" element={<Withdrawals />} />
           <Route path="banks" element={<Banks />} />
           <Route path="transactions" element={<Transactions />} />
+          <Route path="commissions" element={<CommissionsPage />} />
           <Route path="commissions" element={<AdminCommissionsPage />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="gift" element={<AdminGift />} />
@@ -107,6 +115,10 @@ export default function App() {
           <Route path="sales-settings" element={<SalesSettingsPage />} />
           <Route path="/admin/sub-agents/salaries" element={<SubAgentSalariesPage />} />
           <Route path="/admin/reports/sales-commissions" element={<SalesAndCommissionsReport />} />
+          <Route path="operations" element={<OperationsPage />} />
+          <Route path="finances" element={<FinancesPage />} />
+          <Route path="5linhas" element={<FiveLinesPage />} />
+          <Route path="settings" element={<SettingsPage />} />
           
           {/* CORRIGIDO: Removido o prefixo /admin/ absoluto */}
           <Route path="commissions/sub-agents" element={<CommissionSubAgentsPage />} />
