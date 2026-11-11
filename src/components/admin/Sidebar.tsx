@@ -14,6 +14,7 @@ import {
   Landmark,
   Handshake,
   Settings2,
+  Package,
 } from "lucide-react"
 
 const sectionTitle =
@@ -125,6 +126,10 @@ export default function Sidebar() {
             icon={<Server size={18} />}
           >
             5 Linhas
+          </SidebarLink>
+
+          <SidebarLink to="/admin/aki/products" icon={<Package size={18} />}>
+            Produtos AKI
           </SidebarLink>
 
           <SidebarLink

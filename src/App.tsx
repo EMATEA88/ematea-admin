@@ -39,7 +39,8 @@ import CommissionsPage from "./pages/admin/commissions/CommissionsPage"
 import OperationsPage from "./pages/admin/OperationsPage"
 import FinancesPage from "./pages/admin/FinancesPage"
 import FiveLinesPage from "./pages/admin/FiveLinesPage"
-import SettingsPage from "./pages/admin/SettingsPage"
+import SettingsPage from "./pages/admin/SettingsPage" 
+import AkiProductsPage from "./pages/admin/AkiProductsPage";
 
 import AdminAccountDeletion from "./pages/admin/AdminAccountDeletion"
 
@@ -134,6 +135,7 @@ export default function App() {
           <Route path="aki" element={<AkiDashboardPage />} />
           <Route path="aki" element={<AkiDashboardPage />} />
           <Route path="aki/reports" element={<AkiReportsPage />} />
+          <Route path="aki/products" element={<AkiProductsPage />} />
 
           {/* SERVICES */}
           <Route path="services" element={<AdminServiceRequests />} />
