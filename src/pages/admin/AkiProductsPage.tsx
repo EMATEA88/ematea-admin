@@ -6,6 +6,7 @@ import {
   RefreshCw,
   Package,
   Power,
+  Pencil,
   Plus,
   X,
   Loader2,
@@ -150,6 +151,14 @@ export default function AkiProductsPage() {
 
   const [groups, setGroups] = useState<ProductOption[]>([]);
   const [form, setForm] = useState<ProductForm>(EMPTY_FORM);
+
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    price: "",
+    providerCommission: "",
+  });
+  const [editSaving, setEditSaving] = useState(false);
 
   const [groupEditorProduct, setGroupEditorProduct] = useState<Product | null>(null);
   const [groupEditorValue, setGroupEditorValue] = useState("");
@@ -337,6 +346,89 @@ export default function AkiProductsPage() {
       );
     } finally {
       setGroupEditorSaving(false);
+    }
+  }
+
+  function openEditForm(product: Product) {
+    setEditProduct(product);
+    setEditForm({
+      name: product.name,
+      price: String(product.price ?? ""),
+      providerCommission: String(product.providerCommission ?? 0),
+    });
+  }
+
+  async function handleUpdateProduct(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!editProduct || editSaving) return;
+
+    const name = editForm.name.trim();
+    const price = Number(editForm.price);
+    const providerCommission = Number(editForm.providerCommission);
+
+    if (!name) {
+      toast.error("Informe o nome do produto.");
+      return;
+    }
+
+    if (!Number.isFinite(price) || price <= 0) {
+      toast.error("O preço de venda deve ser superior a zero.");
+      return;
+    }
+
+    if (
+      !Number.isFinite(providerCommission) ||
+      providerCommission < 0 ||
+      providerCommission > price
+    ) {
+      toast.error(
+        "A comissão deve estar entre zero e o preço de venda."
+      );
+      return;
+    }
+
+    setEditSaving(true);
+    const toastId = toast.loading("A guardar alterações do produto...");
+
+    try {
+      const response = await adminAkiService.updateProduct(editProduct.id, {
+        name,
+        price,
+        providerCommission,
+      });
+
+      if (response?.success === false) {
+        throw new Error(
+          response?.message || "Não foi possível atualizar o produto."
+        );
+      }
+
+      setEditProduct(null);
+      setEditForm({ name: "", price: "", providerCommission: "" });
+
+      toast.success(
+        response?.message || `Produto "${name}" atualizado com sucesso.`,
+        {
+          id: toastId,
+          duration: 5000,
+          icon: "✓",
+        }
+      );
+
+      await loadProducts();
+    } catch (error: any) {
+      console.error("Erro ao atualizar produto AKI:", error);
+
+      toast.error(
+        getErrorMessage(error, "Não foi possível atualizar o produto."),
+        {
+          id: toastId,
+          duration: 7000,
+        }
+      );
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -778,6 +870,15 @@ export default function AkiProductsPage() {
                     <div className="inline-flex items-center gap-2">
                       <button
                         type="button"
+                        onClick={() => openEditForm(product)}
+                        disabled={updatingId === product.id || syncing || editSaving}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 px-3 py-2 text-xs font-medium text-emerald-300 transition hover:bg-emerald-500/10 disabled:opacity-50"
+                      >
+                        <Pencil size={13} />
+                        Editar
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => void openGroupEditor(product)}
                         disabled={updatingId === product.id || syncing}
                         className="rounded-lg border border-blue-500/30 px-3 py-2 text-xs font-medium text-blue-300 transition hover:bg-blue-500/10 disabled:opacity-50"
@@ -1063,6 +1164,127 @@ export default function AkiProductsPage() {
                   {saving
                     ? "A registar..."
                     : "Registar produto"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editProduct && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/75 p-4">
+          <div className="my-8 w-full max-w-xl rounded-xl border border-[#252B33] bg-[#161A1F] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#252B33] px-5 py-4">
+              <div>
+                <h2 className="font-semibold text-white">Editar produto</h2>
+                <p className="mt-1 text-xs text-gray-500">
+                  Código: {editProduct.externalId ?? editProduct.providerCode ?? "—"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditProduct(null)}
+                disabled={editSaving}
+                className="rounded-lg p-2 text-gray-400 hover:bg-white/5 hover:text-white disabled:opacity-50"
+                aria-label="Fechar formulário de edição"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateProduct} className="space-y-4 p-5">
+              <div>
+                <label className={labelClass}>Nome do produto *</label>
+                <input
+                  required
+                  maxLength={160}
+                  value={editForm.name}
+                  onChange={(event) =>
+                    setEditForm((current) => ({
+                      ...current,
+                      name: event.target.value,
+                    }))
+                  }
+                  disabled={editSaving}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={labelClass}>Preço de venda (Kz) *</label>
+                  <input
+                    required
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={editForm.price}
+                    onChange={(event) =>
+                      setEditForm((current) => ({
+                        ...current,
+                        price: event.target.value,
+                      }))
+                    }
+                    disabled={editSaving}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Comissão do fornecedor (Kz) *</label>
+                  <input
+                    required
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={editForm.providerCommission}
+                    onChange={(event) =>
+                      setEditForm((current) => ({
+                        ...current,
+                        providerCommission: event.target.value,
+                      }))
+                    }
+                    disabled={editSaving}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-[#252B33] bg-[#0B0E11] px-3 py-3 text-xs text-gray-400">
+                O código externo, o grupo, o estado de ativação e o histórico de transações
+                serão preservados. O custo será recalculado automaticamente pela diferença
+                entre o preço de venda e a comissão do fornecedor.
+                <p className="mt-2 text-gray-300">
+                  Custo calculado:{" "}
+                  <span className="font-semibold text-emerald-400">
+                    {Number(editForm.price) >= Number(editForm.providerCommission) &&
+                    Number(editForm.price) > 0 &&
+                    Number.isFinite(Number(editForm.price)) &&
+                    Number.isFinite(Number(editForm.providerCommission))
+                      ? `${formatMoney(
+                          Number(editForm.price) - Number(editForm.providerCommission)
+                        )} Kz`
+                      : "—"}
+                  </span>
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-[#252B33] pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditProduct(null)}
+                  disabled={editSaving}
+                  className="rounded-lg border border-[#252B33] px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSaving}
+                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {editSaving && <Loader2 size={15} className="animate-spin" />}
+                  {editSaving ? "A guardar..." : "Guardar alterações"}
                 </button>
               </div>
             </form>

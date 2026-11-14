@@ -37,6 +37,12 @@ export interface CreateAkiProductData {
   providerCommission: number;
 }
 
+export interface UpdateAkiProductData {
+  name: string;
+  price: number;
+  providerCommission: number;
+}
+
 export const adminAkiService = {
   async getAccountInfo() {
     const response = await api.get("/admin/aki/account/info");
@@ -134,4 +140,10 @@ export const adminAkiService = {
     const response = await api.post("/admin/aki/products", data);
     return response.data;
   },
+
+  async updateProduct(id: number, data: UpdateAkiProductData) {
+  const response = await api.patch(`/admin/aki/products/${id}`, data);
+  return response.data;
+},
 };
+
