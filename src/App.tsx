@@ -41,6 +41,7 @@ import FinancesPage from "./pages/admin/FinancesPage"
 import FiveLinesPage from "./pages/admin/FiveLinesPage"
 import SettingsPage from "./pages/admin/SettingsPage" 
 import AkiProductsPage from "./pages/admin/AkiProductsPage";
+import SupportSettingsPage from "./pages/admin/SupportSettingsPage";
 
 import AdminAccountDeletion from "./pages/admin/AdminAccountDeletion"
 
@@ -120,6 +121,8 @@ export default function App() {
           <Route path="finances" element={<FinancesPage />} />
           <Route path="5linhas" element={<FiveLinesPage />} />
           <Route path="settings" element={<SettingsPage />} />
+
+          <Route path="support-settings" element={<SupportSettingsPage />} />
           
           {/* CORRIGIDO: Removido o prefixo /admin/ absoluto */}
           <Route path="commissions/sub-agents" element={<CommissionSubAgentsPage />} />

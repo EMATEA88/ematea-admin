@@ -15,6 +15,7 @@ import {
   Handshake,
   Settings2,
   Package,
+  MessageCircle,
 } from "lucide-react"
 
 const sectionTitle =
@@ -102,13 +103,14 @@ export default function Sidebar() {
           </SidebarLink>
 
           {/* CONFIGURAÇÕES */}
-          <div className={sectionTitle}>Configurações</div>
+         <div className={sectionTitle}>Configurações</div>
 
-          <SidebarLink
-            to="/admin/settings"
-            icon={<Settings2 size={18} />}
-          >
-            Definições
+         <SidebarLink to="/admin/settings" icon={<Settings2 size={18} />}>
+           Definições
+         </SidebarLink>
+
+          <SidebarLink to="/admin/support-settings" icon={<MessageCircle size={18} />}>
+            Configurações de suporte
           </SidebarLink>
 
           {/* INTEGRAÇÕES */}
