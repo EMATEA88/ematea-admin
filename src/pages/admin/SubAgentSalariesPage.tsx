@@ -26,8 +26,12 @@ export default function SubAgentSalariesPage() {
     // Sub-agentes pertencentes a agentes ficam fora
     // deste fluxo de salários.
     const emateaSubAgents = data.filter(
-      (agent) => agent.createdBy?.role !== "AGENT"
-    );
+  (agent) =>
+    agent.createdBy?.role !== "AGENT" &&
+    agent.isActive === true
+);
+
+setSubAgents(emateaSubAgents);
 
     setSubAgents(emateaSubAgents);
   } catch (error) {

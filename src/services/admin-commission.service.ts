@@ -201,4 +201,24 @@ async getClientDailyPurchases(clientUserId: number, date: string) {
     return data.data;
   },
 
+    /* =====================================================
+     VISIBILIDADE DOS SUB-AGENTES NOS RELATÓRIOS
+  ===================================================== */
+
+  async hideSubAgent(subAgentId: number) {
+    const { data } = await api.patch(
+      `/admin/commissions/sub-agents/${subAgentId}/hide`
+    );
+
+    return data;
+  },
+
+  async showSubAgent(subAgentId: number) {
+    const { data } = await api.patch(
+      `/admin/commissions/sub-agents/${subAgentId}/show`
+    );
+
+    return data;
+  },
+
 };

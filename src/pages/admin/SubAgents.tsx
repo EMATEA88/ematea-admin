@@ -344,7 +344,19 @@ async function toggleSales(sub: SubAgent) {
       
       {/* MODALS */}
       <CreateSubAgentModal open={showCreate} onClose={() => setShowCreate(false)} onSuccess={load} />
-      <SubAgentDetailsModal open={showDetails} subAgent={selected} onClose={() => { setShowDetails(false); setSelected(null); }} />
+      <SubAgentDetailsModal
+  open={showDetails}
+  subAgent={selected}
+  onClose={() => {
+    setShowDetails(false)
+    setSelected(null)
+  }}
+  onSuccess={() => {
+    load()
+    setShowDetails(false)
+    setSelected(null)
+  }}
+/>
       <EditSubAgentModal open={showEdit} subAgent={selected} onClose={() => { setShowEdit(false); setSelected(null); }} onSuccess={() => { load(); setShowEdit(false); setSelected(null); }} />
       <ResetPinModal open={showResetPin} subAgent={selected} onClose={() => { setShowResetPin(false); setSelected(null); }} onSuccess={() => { setShowResetPin(false); setSelected(null); load(); }} />
 
