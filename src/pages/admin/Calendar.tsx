@@ -6,7 +6,8 @@ import {
   Clock,
   CurrencyCircleDollar,
   DownloadSimple,
-  UserCircle
+  UserCircle,
+  X
 } from "@phosphor-icons/react";
 import { toast } from "react-hot-toast";
 import { AdminCommissionService } from "../../services/admin-commission.service";
@@ -24,6 +25,19 @@ interface CalendarSale {
   amount: number;
   customerReference?: string | null;
   createdAt?: string;
+  customerName?: string | null;
+  providerName?: string | null;
+  status?: string | null;
+  transactionId?: number | string | null;
+  description?: string | null;
+  currency?: string | null;
+  customer?: any;
+  user?: any;
+  provider?: any;
+  serviceRequest?: any;
+  transaction?: any;
+  metadata?: any;
+  [key: string]: any;
 }
 
 interface CalendarResponse {
@@ -38,6 +52,7 @@ interface SubAgent {
   name: string;
   phone: string;
   email: string;
+  parentAgentId?: number | null;
 }
 
 /* =====================================================
@@ -88,11 +103,177 @@ function formatDate(date: Date) {
 function parseDate(value: string) {
   const [year, month, day] = value.split("-").map(Number);
 
-  return new Date(
-    year,
-    month - 1,
-    day
+  return new Date(year, month - 1, day);
+}
+
+function paintPdfBackground(pdf: jsPDF) {
+  const width = pdf.internal.pageSize.getWidth();
+  const height = pdf.internal.pageSize.getHeight();
+  pdf.setFillColor(231, 245, 253);
+  pdf.rect(0, 0, width, height, "F");
+}
+
+function getSaleStatus(status?: string | null) {
+  if (!status) return "Concluída";
+  const normalized = status.toUpperCase();
+  if (["COMPLETED", "PAID", "SUCCESS"].includes(normalized)) return "Concluída";
+  if (["PENDING", "IN_PROGRESS", "PROCESSING"].includes(normalized)) return "Em processamento";
+  if (["REJECTED", "FAILED", "CANCELLED"].includes(normalized)) return "Falhada";
+  return status;
+}
+
+function readFirstText(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    const text = String(value).trim();
+    if (text && text !== "null" && text !== "undefined") return text;
+  }
+  return null;
+}
+
+/**
+ * Normaliza respostas de diferentes versões do endpoint.
+ * Mantém o payload original para não perder metadados que possam ser úteis
+ * no detalhe da auditoria.
+ */
+function normalizeProviderLabel(value: unknown): string | null {
+  const text = readFirstText(value);
+  if (!text) return null;
+  return text
+    .replace(/[_-]+/g, " ")
+    .replace(/\\s+/g, " ")
+    .trim()
+    .replace(/\\bzap\\b/i, "ZAP")
+    .replace(/\\bdstv\\b/i, "DStv")
+    .replace(/\\bunitel\\b/i, "Unitel")
+    .replace(/\\bafricell\\b/i, "Africell")
+    .replace(/\\bmovicel\\b/i, "Movicel")
+    .replace(/\\bsat\\b/i, "SAT")
+    .replace(/\\b\\w/g, (letter) => letter.toUpperCase());
+}
+
+function normalizeCalendarSale(raw: any): CalendarSale {
+  const transaction = raw?.transaction ?? raw?.Transaction ?? {};
+  const request = raw?.serviceRequest ?? raw?.ServiceRequest ?? raw?.request ?? {};
+  const metadata = raw?.metadata ?? transaction?.metadata ?? request?.metadata ?? {};
+  const providerResponse = raw?.providerResponse ?? request?.providerResponse ?? metadata?.providerResponse ?? {};
+  const details = raw?.details ?? metadata?.details ?? {};
+  const customer = raw?.customer ?? raw?.client ?? raw?.user ?? request?.customer ?? request?.user ?? {};
+  const provider = raw?.provider ?? raw?.operatorData ?? request?.provider ?? request?.serviceGroup?.provider ?? {};
+  const service = readFirstText(
+    raw?.service, raw?.serviceName, raw?.planName,
+    request?.serviceName, request?.planName,
+    metadata?.serviceName, metadata?.planName,
+    transaction?.description, raw?.description
+  ) ?? "Operação";
+
+  const createdAt = readFirstText(
+    raw?.createdAt, raw?.created_at,
+    transaction?.createdAt, request?.createdAt
+  ) ?? undefined;
+  const date = createdAt ? new Date(createdAt) : null;
+  const time = readFirstText(raw?.time, raw?.hour, raw?.hora) ??
+    (date && !Number.isNaN(date.getTime())
+      ? date.toLocaleTimeString("pt-AO", { hour: "2-digit", minute: "2-digit" })
+      : "-");
+
+  const customerName = readFirstText(
+    raw?.customerName, raw?.clientName, raw?.fullName, raw?.name,
+    customer?.fullName, customer?.name, customer?.displayName,
+    request?.customerName, request?.clientName, request?.customer?.name,
+    metadata?.customerName, metadata?.clientName, metadata?.customer?.name,
+    details?.customerName, details?.clientName,
+    providerResponse?.CustomerName, providerResponse?.customerName,
+    providerResponse?.Response?.CustomerName, providerResponse?.Response?.customerName
   );
+
+  // Em operações como ZAP_SAT, o código/nome do serviço identifica a operadora.
+  const providerName = normalizeProviderLabel(readFirstText(
+    raw?.providerName, raw?.operatorName, raw?.operator, raw?.provider,
+    provider?.name, provider?.providerName, provider?.operatorName,
+    request?.providerName, request?.partnerName, request?.provider?.name,
+    request?.serviceGroup?.provider?.name,
+    metadata?.providerName, metadata?.operatorName, metadata?.provider?.name,
+    details?.providerName, details?.operatorName,
+    providerResponse?.ProviderName, providerResponse?.providerName,
+    providerResponse?.OperatorName, providerResponse?.operatorName,
+    service
+  ));
+
+  return {
+    ...raw,
+    id: Number(raw?.id ?? transaction?.id ?? request?.id ?? 0),
+    time,
+    service: normalizeProviderLabel(service) ?? service,
+    amount: Number(raw?.amount ?? raw?.value ?? transaction?.amount ?? request?.amount ?? 0),
+    customerReference: readFirstText(
+      raw?.customerReference, raw?.reference, raw?.destination,
+      request?.customerReference, request?.customer?.phone, request?.customer?.phoneNumber,
+      metadata?.customerReference, details?.customerReference,
+      transaction?.reference
+    ),
+    createdAt,
+    customerName,
+    providerName,
+    status: readFirstText(raw?.status, transaction?.status, request?.status),
+    transactionId: raw?.transactionId ?? transaction?.id ?? request?.transactionId ?? null,
+    description: readFirstText(
+      raw?.description, transaction?.description, request?.description,
+      metadata?.description, details?.description
+    ),
+    currency: readFirstText(raw?.currency, transaction?.currency, metadata?.currency) ?? "AOA",
+    customer,
+    provider,
+    serviceRequest: request,
+    transaction,
+    metadata
+  };
+}
+
+function normalizeDailyResponse(response: any): any {
+  if (!response) return null;
+  const sales = Array.isArray(response.sales)
+    ? response.sales.map(normalizeCalendarSale)
+    : Array.isArray(response.transactions)
+      ? response.transactions.map(normalizeCalendarSale)
+      : [];
+  return {
+    ...response,
+    sales,
+    total: Number(response.total ?? response.totalAmount ?? sales.reduce(
+      (sum: number, sale: CalendarSale) => sum + Number(sale.amount || 0), 0
+    ))
+  };
+}
+
+function drawPdfBrand(pdf: jsPDF, pageWidth: number, title: string, generatedAt: string) {
+  // Símbolo vetorial sem qualquer disco/fundo branco.
+  pdf.setDrawColor(42, 190, 210);
+  pdf.setLineWidth(1.6);
+  pdf.roundedRect(13, 10, 16, 16, 3, 3, "S");
+  pdf.setDrawColor(255, 255, 255);
+  pdf.setLineWidth(2.2);
+  pdf.line(18, 14, 18, 22);
+  pdf.line(18, 14, 25, 14);
+  pdf.line(18, 18, 23, 18);
+  pdf.line(18, 22, 25, 22);
+
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(17);
+  pdf.text("EMATEA", 34, 16);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(9);
+  pdf.setTextColor(190, 220, 235);
+  pdf.text("FINANCIAL SERVICES  ·  ANGOLA", 34, 22);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(10);
+  pdf.setTextColor(255, 255, 255);
+  pdf.text(title, 14, 33);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(7.5);
+  pdf.setTextColor(190, 220, 235);
+  pdf.text(`Emitido em ${generatedAt}`, pageWidth - 14, 17, { align: "right" });
 }
 
 /* =====================================================
@@ -120,6 +301,12 @@ function SubAgentCalendar() {
 
   const [subAgentSearch, setSubAgentSearch] =
     useState("");
+
+  const [subAgentOrigin, setSubAgentOrigin] =
+    useState<"all" | "emate a" | "agent">("all");
+
+  const [selectedSale, setSelectedSale] =
+    useState<CalendarSale | null>(null);
 
   const [dailyData, setDailyData] =
     useState<CalendarResponse | null>(null);
@@ -170,7 +357,14 @@ function SubAgentCalendar() {
               id: Number(id),
               name: String(name),
               phone: String(item?.phone ?? item?.user?.phone ?? item?.user?.phoneNumber ?? ""),
-              email: String(item?.subAgentEmail ?? item?.email ?? item?.user?.email ?? "")
+              email: String(item?.subAgentEmail ?? item?.email ?? item?.user?.email ?? ""),
+              parentAgentId: item?.agentId != null
+                ? Number(item.agentId)
+                : item?.agentId === null || item?.agent === null
+                  ? null
+                  : item?.agent?.id != null || item?.agentProfile?.id != null
+                    ? Number(item?.agent?.id ?? item?.agentProfile?.id)
+                    : undefined
             };
           })
           .filter(
@@ -225,7 +419,7 @@ function SubAgentCalendar() {
             selectedDate
           );
 
-        setDailyData(response ?? null);
+        setDailyData(normalizeDailyResponse(response));
 
       } catch (error) {
 
@@ -378,11 +572,16 @@ function SubAgentCalendar() {
     const query = subAgentSearch.trim().toLocaleLowerCase("pt-AO");
     if (!query) return subAgents;
 
-    return subAgents.filter((subAgent) =>
-      [subAgent.name, subAgent.phone, subAgent.email, String(subAgent.id)]
-        .some((value) => value.toLocaleLowerCase("pt-AO").includes(query))
-    );
-  }, [subAgents, subAgentSearch]);
+    return subAgents.filter((subAgent) => {
+      const matchesSearch = [subAgent.name, subAgent.phone, subAgent.email]
+        .some((value) => value.toLocaleLowerCase("pt-AO").includes(query));
+      const matchesOrigin =
+        subAgentOrigin === "all" ||
+        (subAgentOrigin === "emate a" && subAgent.parentAgentId === null) ||
+        (subAgentOrigin === "agent" && subAgent.parentAgentId != null);
+      return matchesSearch && matchesOrigin;
+    });
+  }, [subAgents, subAgentSearch, subAgentOrigin]);
 
   /* =====================================================
      SELECTED SUB-AGENT NAME
@@ -428,62 +627,53 @@ function SubAgentCalendar() {
         }
       );
 
-      // Cabeçalho
-      pdf.setFillColor(7, 9, 13);
-      pdf.rect(0, 0, pageWidth, 38, "F");
+      // Fundo azul-bebé em toda a página
+      paintPdfBackground(pdf);
 
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(18);
-      pdf.text("EMATEA", 14, 15);
-
-      pdf.setFontSize(11);
-      pdf.setFont("helvetica", "normal");
-      pdf.setTextColor(190, 198, 210);
-      pdf.text("EXTRATO DIÁRIO", 14, 23);
-
-      pdf.setFontSize(9);
-      pdf.text(
-        `Gerado em ${new Date().toLocaleString("pt-AO")}`,
-        pageWidth - 14,
-        15,
-        { align: "right" }
+      // Cabeçalho bancário com marca vetorial e identificação do documento.
+      pdf.setFillColor(8, 43, 62);
+      pdf.rect(0, 0, pageWidth, 42, "F");
+      drawPdfBrand(
+        pdf,
+        pageWidth,
+        "EXTRATO DIÁRIO DE SUB-AGENTE",
+        new Date().toLocaleString("pt-AO")
       );
 
       // Informações do extrato
       pdf.setTextColor(35, 40, 48);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(12);
-      pdf.text("Informações do extrato", 14, 50);
+      pdf.text("INFORMAÇÕES DO EXTRATO", 14, 53);
 
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(10);
 
-      pdf.text("Sub-agente:", 14, 59);
+      pdf.text("Sub-agente:", 14, 62);
       pdf.setFont("helvetica", "bold");
-      pdf.text(selectedSubAgentName || `Sub-agente ${selectedSubAgent}`, 42, 59);
+      pdf.text(selectedSubAgentName || `Sub-agente ${selectedSubAgent}`, 42, 62);
 
       pdf.setFont("helvetica", "normal");
-      pdf.text("Data:", 14, 66);
+      pdf.text("Data:", 14, 69);
       pdf.setFont("helvetica", "bold");
-      pdf.text(selectedDateFormatted, 42, 66);
+      pdf.text(selectedDateFormatted, 42, 69);
 
       pdf.setFont("helvetica", "normal");
-      pdf.text("Total de transações:", 14, 73);
+      pdf.text("Total de transações:", 14, 76);
       pdf.setFont("helvetica", "bold");
-      pdf.text(String(dailyData.sales.length), 54, 73);
+      pdf.text(String(dailyData.sales.length), 54, 76);
 
       // Resumo financeiro
-      pdf.setFillColor(239, 250, 245);
-      pdf.roundedRect(14, 81, pageWidth - 28, 25, 3, 3, "F");
+      pdf.setFillColor(211, 239, 250);
+      pdf.roundedRect(10, 84, pageWidth - 20, 25, 3, 3, "F");
 
-      pdf.setTextColor(20, 100, 70);
+      pdf.setTextColor(8, 91, 125);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(9);
-      pdf.text("TOTAL ACUMULADO DO DIA", 20, 91);
+      pdf.text("TOTAL ACUMULADO DO DIA", 16, 94);
 
       pdf.setFontSize(15);
-      pdf.text(formatCurrency(dailyData.total), 20, 100);
+      pdf.text(formatCurrency(dailyData.total), 16, 103);
 
       // Tabela
       const tableRows = dailyData.sales.map((sale) => [
@@ -494,7 +684,7 @@ function SubAgentCalendar() {
       ]);
 
       autoTable(pdf, {
-        startY: 115,
+        startY: 117,
         head: [["Hora", "Serviço", "Referência", "Valor"]],
         body: tableRows,
         theme: "grid",
@@ -502,17 +692,27 @@ function SubAgentCalendar() {
           font: "helvetica",
           fontSize: 8.5,
           cellPadding: 3,
-          textColor: [45, 50, 58],
-          lineColor: [220, 224, 230],
+          textColor: [8, 43, 62],
+          fillColor: [231, 245, 253],
+          lineColor: [190, 218, 232],
           lineWidth: 0.2
         },
+        bodyStyles: { fillColor: [231, 245, 253] },
         headStyles: {
-          fillColor: [17, 21, 27],
+          fillColor: [8, 43, 62],
           textColor: [255, 255, 255],
           fontStyle: "bold"
         },
         alternateRowStyles: {
-          fillColor: [248, 249, 251]
+          fillColor: [214, 237, 248]
+        },
+        willDrawPage: (data) => {
+          if (data.pageNumber > 1) {
+            paintPdfBackground(pdf);
+            pdf.setFillColor(8, 43, 62);
+            pdf.rect(0, 0, pageWidth, 42, "F");
+            drawPdfBrand(pdf, pageWidth, "EXTRATO DIÁRIO DE SUB-AGENTE", new Date().toLocaleString("pt-AO"));
+          }
         },
         columnStyles: {
           0: { cellWidth: 25 },
@@ -527,8 +727,9 @@ function SubAgentCalendar() {
           }
         },
         margin: {
-          left: 14,
-          right: 14,
+          top: 48,
+          left: 10,
+          right: 10,
           bottom: 20
         }
       });
@@ -631,11 +832,24 @@ function SubAgentCalendar() {
                 type="search"
                 value={subAgentSearch}
                 onChange={(event) => setSubAgentSearch(event.target.value)}
-                placeholder="Pesquisar por nome, telefone, ID ou e-mail..."
-                aria-label="Pesquisar sub-agentes por nome, telefone, ID ou e-mail"
+                placeholder="Pesquisar por nome, telefone ou e-mail..."
+                aria-label="Pesquisar sub-agentes por nome, telefone ou e-mail"
                 className="h-10 w-full bg-[#161B22] border border-white/10 rounded-xl px-3 text-xs md:text-sm text-white placeholder:text-gray-500 outline-none focus:border-blue-500 transition"
               />
 
+              <select
+                value={subAgentOrigin}
+                onChange={(event) => {
+                  setSubAgentOrigin(event.target.value as "all" | "emate a" | "agent");
+                  setSelectedSubAgent(null);
+                }}
+                aria-label="Filtrar sub-agentes por vínculo"
+                className="h-10 w-full bg-[#161B22] border border-white/10 rounded-xl px-3 text-xs text-white outline-none focus:border-blue-500"
+              >
+                <option value="all">Todos os sub-agentes</option>
+                <option value="emate a">Sub-agentes da EMATEA</option>
+                <option value="agent">Sub-agentes de agentes</option>
+              </select>
               {loadingSubAgents ? (
                 <div className="h-11 w-full bg-[#161B22] border border-white/10 rounded-xl animate-pulse" />
               ) : (
@@ -650,7 +864,7 @@ function SubAgentCalendar() {
                   <option value="">Selecionar sub-agente...</option>
                   {filteredSubAgents.map((subAgent) => (
                     <option key={subAgent.id} value={subAgent.id}>
-                      {subAgent.name} · ID {subAgent.id}{subAgent.phone ? ` · ${subAgent.phone}` : ""}{subAgent.email ? ` · ${subAgent.email}` : ""}
+                      {subAgent.name}{subAgent.email ? ` · ${subAgent.email}` : subAgent.phone ? ` · ${subAgent.phone}` : ""}
                     </option>
                   ))}
                 </select>
@@ -845,9 +1059,12 @@ function SubAgentCalendar() {
                 ) : (
                   <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                     {dailyData.sales.map((sale) => (
-                      <div
+                      <button
+                        type="button"
                         key={sale.id}
-                        className="flex items-center justify-between gap-3 bg-[#161B22] border border-white/[0.04] hover:border-white/[0.08] transition rounded-xl p-3.5"
+                        onClick={() => setSelectedSale(sale)}
+                        aria-label={`Abrir detalhes da transação ${sale.service}`}
+                        className="w-full text-left flex items-center justify-between gap-3 bg-[#161B22] border border-white/[0.04] hover:border-blue-400/40 hover:bg-[#1A2633] transition rounded-xl p-3.5"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
@@ -873,7 +1090,7 @@ function SubAgentCalendar() {
                         <div className="text-xs md:text-sm font-bold text-emerald-400 whitespace-nowrap">
                           +{formatCurrency(sale.amount)}
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -893,6 +1110,52 @@ function SubAgentCalendar() {
         </div>
 
       </div>
+
+      {selectedSale && (
+        <div
+          className="fixed inset-0 z-[100] bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedSale(null);
+          }}
+        >
+          <section role="dialog" aria-modal="true" aria-labelledby="sale-detail-title" className="w-full max-w-md rounded-2xl border border-sky-200/70 bg-[#E7F5FD] text-[#082B3E] shadow-2xl overflow-hidden">
+            <header className="flex items-center justify-between px-5 py-4 border-b border-sky-200">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-sky-700 font-bold">EMATEA · Auditoria</p>
+                <h3 id="sale-detail-title" className="text-lg font-bold">Detalhes da transação</h3>
+              </div>
+              <button type="button" onClick={() => setSelectedSale(null)} aria-label="Fechar detalhes" className="w-9 h-9 rounded-full hover:bg-sky-100 flex items-center justify-center"><X size={18} /></button>
+            </header>
+            <div className="p-5 space-y-3">
+              <div className="rounded-xl bg-[#D8EFF9] border border-sky-200 p-4 text-center">
+                <p className="text-xs text-sky-700">Valor da operação</p>
+                <p className="text-3xl font-black text-[#087EAD]">{formatCurrency(selectedSale.amount)}</p>
+              </div>
+              {([
+                ["Serviço", selectedSale.service],
+                ["Referência", selectedSale.customerReference || "—"],
+                ["Hora", selectedSale.time || "—"],
+                ["Data", selectedSale.createdAt ? new Date(selectedSale.createdAt).toLocaleString("pt-AO") : parseDate(selectedDate).toLocaleDateString("pt-AO")],
+                ["Cliente", selectedSale.customerName || "Não disponível nos dados recebidos"],
+                ["Operadora / fornecedor", selectedSale.providerName || normalizeProviderLabel(selectedSale.service) || "Não identificado"],
+                ["Estado", getSaleStatus(selectedSale.status)],
+                ["ID da transação", selectedSale.transactionId ? String(selectedSale.transactionId) : "—"],
+                ["Descrição", selectedSale.description || "—"],
+                ["Moeda", selectedSale.currency || "AOA"]
+              ] as Array<[string, string]>).map(([label, value]) => (
+                <div key={label} className="flex items-start justify-between gap-4 border-b border-sky-200/80 pb-2 text-sm">
+                  <span className="text-sky-700">{label}</span>
+                  <span className="text-right font-semibold break-all max-w-[62%]">{value}</span>
+                </div>
+              ))}
+            </div>
+            <footer className="px-5 pb-5">
+              <button type="button" onClick={() => setSelectedSale(null)} className="w-full rounded-xl bg-[#0A789F] hover:bg-[#086889] text-white font-semibold py-3 text-sm transition">Fechar</button>
+            </footer>
+          </section>
+        </div>
+      )}
 
     </div>
 
@@ -917,6 +1180,7 @@ function EntityCalendar({ kind }: { kind: CalendarKind }) {
   const [search, setSearch] = useState("");
   const [people, setPeople] = useState<CalendarPerson[]>([]);
   const [dailyData, setDailyData] = useState<EntityDailyResponse | null>(null);
+  const [selectedSale, setSelectedSale] = useState<CalendarSale | null>(null);
   const [loadingPeople, setLoadingPeople] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -964,7 +1228,7 @@ function EntityCalendar({ kind }: { kind: CalendarKind }) {
         const response = kind === "agent"
           ? await AdminCommissionService.getAgentDailySales(selectedId, selectedDate)
           : await AdminCommissionService.getClientDailyPurchases(selectedId, selectedDate);
-        if (active) setDailyData(response ?? null);
+        if (active) setDailyData(normalizeDailyResponse(response));
       } catch (error) {
         console.error("Erro ao carregar movimentos do dia:", error);
         if (active) { setDailyData(null); toast.error("Erro ao carregar movimentos do dia."); }
@@ -996,7 +1260,6 @@ function EntityCalendar({ kind }: { kind: CalendarKind }) {
   const normalizedSearch = search.trim().toLocaleLowerCase("pt-AO");
   const filteredPeople = people.filter(person =>
     !normalizedSearch ||
-    String(person.id).includes(normalizedSearch) ||
     person.name.toLocaleLowerCase("pt-AO").includes(normalizedSearch) ||
     person.email.toLocaleLowerCase("pt-AO").includes(normalizedSearch) ||
     person.phone.toLocaleLowerCase("pt-AO").includes(normalizedSearch)
@@ -1023,17 +1286,10 @@ function EntityCalendar({ kind }: { kind: CalendarKind }) {
       });
       const title = kind === "agent" ? "EXTRATO DIÁRIO DE AGENTE" : "EXTRATO DIÁRIO DE CLIENTE";
 
-      pdf.setFillColor(7, 9, 13);
-      pdf.rect(0, 0, pageWidth, 38, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(18);
-      pdf.text("EMATEA", 14, 15);
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(10);
-      pdf.setTextColor(190, 198, 210);
-      pdf.text(title, 14, 23);
-      pdf.text(`Gerado em ${new Date().toLocaleString("pt-AO")}`, pageWidth - 14, 15, { align: "right" });
+      paintPdfBackground(pdf);
+      pdf.setFillColor(8, 43, 62);
+      pdf.rect(0, 0, pageWidth, 42, "F");
+      drawPdfBrand(pdf, pageWidth, title, new Date().toLocaleString("pt-AO"));
 
       pdf.setTextColor(35, 40, 48);
       pdf.setFont("helvetica", "bold");
@@ -1045,35 +1301,40 @@ function EntityCalendar({ kind }: { kind: CalendarKind }) {
       pdf.setFont("helvetica", "bold");
       pdf.text(selectedName || `${personLabel} ${selectedId}`, 42, 59);
       pdf.setFont("helvetica", "normal");
-      pdf.text("ID:", 14, 66);
+      pdf.text("Data:", 14, 66);
       pdf.setFont("helvetica", "bold");
-      pdf.text(String(selectedId), 42, 66);
+      pdf.text(selectedDateFormatted, 42, 66);
       pdf.setFont("helvetica", "normal");
-      pdf.text("Data:", 14, 73);
+      pdf.text("Total de movimentos:", 14, 73);
       pdf.setFont("helvetica", "bold");
-      pdf.text(selectedDateFormatted, 42, 73);
-      pdf.setFont("helvetica", "normal");
-      pdf.text("Total de movimentos:", 14, 80);
-      pdf.setFont("helvetica", "bold");
-      pdf.text(String(dailyData.sales.length), 54, 80);
+      pdf.text(String(dailyData.sales.length), 54, 73);
 
-      pdf.setFillColor(239, 250, 245);
-      pdf.roundedRect(14, 88, pageWidth - 28, 25, 3, 3, "F");
-      pdf.setTextColor(20, 100, 70);
+      pdf.setFillColor(211, 239, 250);
+      pdf.roundedRect(14, 81, pageWidth - 28, 25, 3, 3, "F");
+      pdf.setTextColor(8, 91, 125);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(9);
-      pdf.text(kind === "agent" ? "TOTAL DE VENDAS DO DIA" : "TOTAL DE COMPRAS DO DIA", 20, 98);
+      pdf.text(kind === "agent" ? "TOTAL DE VENDAS DO DIA" : "TOTAL DE COMPRAS DO DIA", 20, 91);
       pdf.setFontSize(15);
-      pdf.text(formatCurrency(dailyData.total), 20, 107);
+      pdf.text(formatCurrency(dailyData.total), 20, 100);
 
       autoTable(pdf, {
-        startY: 121,
+        startY: 115,
         head: [["Hora", "Serviço", "Referência", "Valor"]],
         body: dailyData.sales.map(sale => [sale.time || "-", sale.service || "-", sale.customerReference || "-", formatCurrency(sale.amount)]),
         theme: "grid",
-        styles: { font: "helvetica", fontSize: 8.5, cellPadding: 3, textColor: [45, 50, 58], lineColor: [220, 224, 230], lineWidth: 0.2 },
-        headStyles: { fillColor: [17, 21, 27], textColor: [255, 255, 255], fontStyle: "bold" },
-        alternateRowStyles: { fillColor: [248, 249, 251] },
+        styles: { font: "helvetica", fontSize: 8.5, cellPadding: 3, textColor: [8, 43, 62], fillColor: [231, 245, 253], lineColor: [190, 218, 232], lineWidth: 0.2 },
+        bodyStyles: { fillColor: [231, 245, 253] },
+        willDrawPage: (data) => {
+          if (data.pageNumber > 1) {
+            paintPdfBackground(pdf);
+            pdf.setFillColor(8, 43, 62);
+            pdf.rect(0, 0, pageWidth, 42, "F");
+            drawPdfBrand(pdf, pageWidth, title, new Date().toLocaleString("pt-AO"));
+          }
+        },
+        headStyles: { fillColor: [8, 43, 62], textColor: [255, 255, 255], fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [214, 237, 248] },
         columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 60 }, 2: { cellWidth: 55 }, 3: { cellWidth: 36, halign: "right" } },
         didParseCell: (data) => {
           if (data.section === "body" && data.column.index === 3) {
@@ -1081,7 +1342,7 @@ function EntityCalendar({ kind }: { kind: CalendarKind }) {
             data.cell.styles.fontStyle = "bold";
           }
         },
-        margin: { left: 14, right: 14, bottom: 20 }
+        margin: { top: 48, left: 14, right: 14, bottom: 20 }
       });
 
       const pageCount = pdf.getNumberOfPages();
@@ -1124,11 +1385,11 @@ function EntityCalendar({ kind }: { kind: CalendarKind }) {
             <span>Exportar PDF</span>
           </button>
           <div className="w-full md:w-[360px] space-y-2">
-          <input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar por nome, telefone, ID ou email..." aria-label={`Pesquisar ${personLabel} por nome, telefone, ID ou email`} className="w-full bg-[#161B22] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 text-white placeholder:text-gray-500" />
+          <input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar por nome, telefone ou email..." aria-label={`Pesquisar ${personLabel} por nome, telefone ou email`} className="w-full bg-[#161B22] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 text-white placeholder:text-gray-500" />
           {loadingPeople ? <div className="h-11 bg-[#161B22] border border-white/10 rounded-xl animate-pulse" /> :
             <select value={selectedId ?? ""} onChange={e => setSelectedId(e.target.value ? Number(e.target.value) : null)} className="w-full bg-[#161B22] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 text-white">
               <option value="">Selecionar {personLabel} ({filteredPeople.length})...</option>
-              {filteredPeople.map(person => <option key={person.id} value={person.id}>{person.name} · ID {person.id}{person.phone ? ` · ${person.phone}` : ""}{person.email ? ` · ${person.email}` : ""}</option>)}
+              {filteredPeople.map(person => <option key={person.id} value={person.id}>{person.name}{person.email ? ` · ${person.email}` : person.phone ? ` · ${person.phone}` : ""}</option>)}
             </select>}
           {!loadingPeople && <p className="text-[11px] text-gray-500">{filteredPeople.length} de {people.length} {kind === "agent" ? "agentes" : "clientes"} carregados</p>}
           </div>
@@ -1155,11 +1416,38 @@ function EntityCalendar({ kind }: { kind: CalendarKind }) {
           <div className="pb-4 border-b border-white/[0.08] mb-4 flex items-center justify-between gap-3"><div><span className="text-[11px] uppercase tracking-wider text-gray-500 font-bold">{totalLabel}</span><div className="text-xl md:text-2xl font-black text-emerald-400 mt-1">{loading ? "A carregar..." : formatCurrency(dailyData?.total ?? 0)}</div></div><span className="text-xs text-gray-400 text-right">{selectedName || `Nenhum ${personLabel} selecionado`}</span></div>
           <div className="space-y-2 min-h-[220px]">
             {!selectedId ? <div className="py-12 text-center text-sm text-gray-400">Selecione um {personLabel} para visualizar os movimentos.</div> : loading ? <div className="py-12 text-center text-sm text-gray-400">A carregar movimentos...</div> : !dailyData?.sales?.length ? <div className="py-12 text-center"><CurrencyCircleDollar size={40} className="mx-auto text-gray-600" /><p className="text-sm text-gray-400 mt-2">Sem movimentos registados neste dia.</p></div> :
-              <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">{dailyData.sales.map(sale => <div key={sale.id} className="flex items-center justify-between gap-3 bg-[#161B22] border border-white/[0.04] rounded-xl p-3.5"><div className="flex items-center gap-3"><div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center"><Clock size={16} className="text-emerald-400" /></div><div><div className="text-sm font-semibold">{sale.service}</div><div className="text-[10px] text-gray-400 mt-0.5">{sale.time}{sale.customerReference ? ` • Ref: ${sale.customerReference}` : ""}</div></div></div><div className="text-sm font-bold text-emerald-400 whitespace-nowrap">{formatCurrency(sale.amount)}</div></div>)}</div>}
+              <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">{dailyData.sales.map(sale => <button type="button" key={sale.id} onClick={() => setSelectedSale(sale)} aria-label={`Abrir detalhes da transação ${sale.service}`} className="w-full text-left flex items-center justify-between gap-3 bg-[#161B22] border border-white/[0.04] hover:border-blue-400/40 hover:bg-[#1A2633] rounded-xl p-3.5 transition"><div className="flex items-center gap-3"><div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center"><Clock size={16} className="text-emerald-400" /></div><div><div className="text-sm font-semibold">{sale.service}</div><div className="text-[10px] text-gray-400 mt-0.5">{sale.time}{sale.customerReference ? ` • Ref: ${sale.customerReference}` : ""}</div></div></div><div className="text-sm font-bold text-emerald-400 whitespace-nowrap">{formatCurrency(sale.amount)}</div></button>)}</div>}
           </div>
           <div className="mt-4 pt-3 border-t border-white/5 flex justify-between text-[11px] text-gray-500"><span>Movimentos concluídos</span><span>EMATEA</span></div>
         </div>
       </div>
+
+      {selectedSale && (
+        <div className="fixed inset-0 z-[100] bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSelectedSale(null); }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="entity-sale-detail-title" className="w-full max-w-md rounded-2xl border border-sky-200/70 bg-[#E7F5FD] text-[#082B3E] shadow-2xl overflow-hidden">
+            <header className="flex items-center justify-between px-5 py-4 border-b border-sky-200">
+              <div><p className="text-[10px] uppercase tracking-[0.18em] text-sky-700 font-bold">EMATEA · Auditoria</p><h3 id="entity-sale-detail-title" className="text-lg font-bold">Detalhes do movimento</h3></div>
+              <button type="button" onClick={() => setSelectedSale(null)} aria-label="Fechar detalhes" className="w-9 h-9 rounded-full hover:bg-sky-100 flex items-center justify-center"><X size={18} /></button>
+            </header>
+            <div className="p-5 space-y-3">
+              <div className="rounded-xl bg-[#D8EFF9] border border-sky-200 p-4 text-center"><p className="text-xs text-sky-700">Valor da operação</p><p className="text-3xl font-black text-[#087EAD]">{formatCurrency(selectedSale.amount)}</p></div>
+              {([
+                ["Serviço", selectedSale.service],
+                ["Referência", selectedSale.customerReference || "—"],
+                ["Hora", selectedSale.time || "—"],
+                ["Data", selectedSale.createdAt ? new Date(selectedSale.createdAt).toLocaleString("pt-AO") : parseDate(selectedDate).toLocaleDateString("pt-AO")],
+                ["Cliente", selectedSale.customerName || "Não disponível nos dados recebidos"],
+                ["Operadora / fornecedor", selectedSale.providerName || normalizeProviderLabel(selectedSale.service) || "Não identificado"],
+                ["Estado", getSaleStatus(selectedSale.status)],
+                ["ID da transação", selectedSale.transactionId ? String(selectedSale.transactionId) : "—"],
+                ["Descrição", selectedSale.description || "—"],
+                ["Moeda", selectedSale.currency || "AOA"]
+              ] as Array<[string, string]>).map(([label, value]) => <div key={label} className="flex items-start justify-between gap-4 border-b border-sky-200/80 pb-2 text-sm"><span className="text-sky-700">{label}</span><span className="text-right font-semibold break-all max-w-[62%]">{value}</span></div>)}
+            </div>
+            <footer className="px-5 pb-5"><button type="button" onClick={() => setSelectedSale(null)} className="w-full rounded-xl bg-[#0A789F] hover:bg-[#086889] text-white font-semibold py-3 text-sm transition">Fechar</button></footer>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

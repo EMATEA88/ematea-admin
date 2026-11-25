@@ -5,11 +5,16 @@ export interface Agent {
   agentCode: string
   status: string
   companyName?: string | null
-  commissionBalance?: number
+
+  // Dados financeiros do AgentProfile
+  currentBalance?: number
   totalSales?: number
   totalCommission?: number
+  commissionBalance?: number
+
   isActive?: boolean
   createdAt?: string
+
   user: {
     id: number
     publicId: string
@@ -32,7 +37,50 @@ export interface Agent {
       phone: string
     }
   }>
+}
 
+export interface SubAgentSale {
+  id: number
+  amount: number
+  cost: number | null
+  profit: number | null
+  status: string
+  serviceName: string | null
+  serviceGroupName: string | null
+  planName: string | null
+  providerName: string | null
+  customerReference: string | null
+  customerName: string | null
+  createdAt: string
+  completedAt: string | null
+  transactionId: number | null
+  transaction: {
+    id: number
+    reference: string | null
+    status: string | null
+  } | null
+}
+
+export interface SubAgentSalesResponse {
+  subAgent: {
+    id: number
+    employeeCode: string
+    fullName: string | null
+    phone: string | null
+  }
+  summary: {
+    totalOperations: number
+    completedSales: number
+    totalSales: number
+    totalProfit: number
+  }
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+  sales: SubAgentSale[]
 }
 
 // Interface auxiliar para os dados enviados na criação
@@ -124,6 +172,22 @@ class AdminAgentService {
     const { data } = await api.patch(
       `/admin/agents/${id}/toggle-block`
     )
+    return data
+  }
+
+    async getSubAgentSales(
+    agentId: number,
+    subAgentId: number,
+    page = 1,
+    limit = 10
+  ): Promise<SubAgentSalesResponse> {
+    const { data } = await api.get(
+      `/admin/agents/${agentId}/sub-agents/${subAgentId}/sales`,
+      {
+        params: { page, limit }
+      }
+    )
+
     return data
   }
 
