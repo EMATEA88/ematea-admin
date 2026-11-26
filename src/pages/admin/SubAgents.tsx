@@ -456,57 +456,59 @@ async function toggleSales(sub: SubAgent) {
         </div>
       </div>
 
-      {/* ================= SEÇÃO 1: SUB-AGENTES EMATEA ================= */}
-      {(activeType === "ALL" || activeType === "INTERNAL") && (
-        <div className="rounded-[2rem] overflow-hidden border border-blue-500/20 bg-[#0B1733] shadow-2xl">
-          <div className="px-6 py-5 border-b border-blue-400/10 bg-[#0F1D3D]">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-black uppercase tracking-widest text-white">
-                  Sub-Agentes da EMATEA
-                </h2>
-                <p className="text-[10px] text-blue-300/60 uppercase tracking-wider mt-1">
-                  Operadores criados diretamente pela EMATEA
-                </p>
-              </div>
-
-              <span className="px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-400/10 text-blue-300 text-[10px] font-black font-mono">
-                {emateaSubAgents.length}
-              </span>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
-              <thead>
-                <tr className="border-b border-blue-400/10 bg-[#0D1935] text-[10px] font-black uppercase tracking-widest text-blue-300/60">
-                  <th className="px-6 py-4.5">Funcionário</th>
-                  <th className="px-4 py-4.5 font-mono">Código</th>
-                  <th className="px-4 py-4.5">Contactos</th>
-                  <th className="px-4 py-4.5">Posto</th>
-                  <th className="px-4 py-4.5">Cargo</th>
-                  <th className="px-4 py-4.5">Supervisor</th>
-                  <th className="px-4 py-4.5 text-center">Estado</th>
-                  <th className="px-4 py-4.5 text-center">Vendas</th>
-                  <th className="px-6 py-4.5 text-center">Ações</th>
-                </tr>
-              </thead>
-
-              <tbody className="text-xs font-medium divide-y divide-blue-400/[0.04]">
-                {!loading && emateaSubAgents.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="p-12 text-center text-blue-300/40 font-mono text-[11px] uppercase tracking-wider">
-                      Nenhum sub-agente da EMATEA localizado.
-                    </td>
-                  </tr>
-                ) : (
-                  renderSubAgentRows(emateaSubAgents)
-                )}
-              </tbody>
-            </table>
-          </div>
+      
+{/* ================= SEÇÃO 1: SUB-AGENTES EMATEA ================= */}
+{(activeType === "ALL" || activeType === "INTERNAL") && (
+  <div className="rounded-[2rem] overflow-hidden border border-white/[0.04] bg-[#161A1E] shadow-2xl">
+    <div className="px-6 py-5 border-b border-white/[0.04] bg-[#111418]/60">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-black uppercase tracking-widest text-white">
+            Sub-Agentes da EMATEA
+          </h2>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1">
+            Operadores criados diretamente pela EMATEA
+          </p>
         </div>
-      )}
+
+        <span className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05] text-gray-400 text-[10px] font-black font-mono">
+          {emateaSubAgents.length}
+        </span>
+      </div>
+    </div>
+
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr className="border-b border-white/[0.03] bg-[#111418]/60 text-[10px] font-black uppercase tracking-widest text-gray-500">
+            <th className="px-6 py-4.5">Funcionário</th>
+            <th className="px-4 py-4.5 font-mono">Código</th>
+            <th className="px-4 py-4.5">Contactos</th>
+            <th className="px-4 py-4.5">Posto</th>
+            <th className="px-4 py-4.5">Cargo</th>
+            <th className="px-4 py-4.5">Supervisor</th>
+            <th className="px-4 py-4.5 text-center">Estado</th>
+            <th className="px-4 py-4.5 text-center">Vendas</th>
+            <th className="px-6 py-4.5 text-center">Ações</th>
+          </tr>
+        </thead>
+
+        <tbody className="text-xs font-medium divide-y divide-white/[0.02]">
+          {!loading && emateaSubAgents.length === 0 ? (
+            <tr>
+              <td colSpan={9} className="p-12 text-center text-gray-600 font-mono text-[11px] uppercase tracking-wider">
+                Nenhum sub-agente da EMATEA localizado.
+              </td>
+            </tr>
+          ) : (
+            renderSubAgentRows(emateaSubAgents)
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
 
       {/* ================= SEÇÃO 2: SUB-AGENTES DOS AGENTES ================= */}
       {(activeType === "ALL" || activeType === "AGENT_FIELD") && (
